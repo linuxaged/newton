@@ -3,10 +3,17 @@ struct Partical {
     velocity:       Vector3,
     acceleration:   Vector3,
     damping:        f32,
-    inverseMass:    f32
+    inverseMass:    f32,
+    forceAccum:     Vector3,
 }
 
 impl Partical {
+    fn addForce(&self, force: &Vector3) {
+        self.forceAccum += force;
+    }
+    fn clearAccumulator() {
+        forceAccum.clear();
+    }
     fn intergrate(duration: f32) {
         assert!(duration > 0.0);
         position.add_scaled_vector(velocity, duration);
@@ -17,5 +24,7 @@ impl Partical {
         velocity.add_scaled_vector(resultingAcc, duration);
 
         velocity *= real_pow(damping, duration);
+
+        clearAccumulator();
     }
 }
