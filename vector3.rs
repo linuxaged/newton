@@ -13,6 +13,11 @@ impl Vector3 {
     fn magnitude(&self) -> f32 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
+    fn add_scaled_vector(&mut self, vector: &Vector3, scale: f32) {
+        self.x += vector.x * scale;
+        self.y += vector.y * scale;
+        self.z += vector.z * scale;
+    }
 }
 
 impl Add<Vector3, Vector3> for Vector3 {
@@ -45,4 +50,5 @@ fn test_mul() {
     let v1 = Vector3{x: 2.0f32,y: 3.0f32,z: 4.0f32};
     println!("{}",v0 * v1);
     println!("{}",Vector3::new(1.0,2.0,3.0).magnitude());
+    println!("{}",Vector3::new(7.0,8.0,9.0).add_scaled_vector(&v0, 2.0));
 }
