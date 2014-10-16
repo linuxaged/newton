@@ -8,9 +8,9 @@ struct Partical {
 
 impl Partical {
 	fn intergrate(duration: f32) {
-	 	assert!(duration > 0.0);
-	 	// Update linear position.
-        position.addScaledVector(velocity, duration);
+		assert!(duration > 0.0);
+		// Update linear position.
+        position.add_scaled_vector(velocity, duration);
         // Work out the acceleration from the force.
         Vector3 resultingAcc = acceleration;
         resultingAcc.addScaledVector(forceAccum, inverseMass);
