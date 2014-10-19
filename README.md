@@ -4,8 +4,8 @@ newton
 physics engine in rust
 
 
-物体
+TODO
+======
+    update force
 
-碰撞
 
-力
