@@ -3,7 +3,5 @@ name = "Newton"
 version = "0.0.1"
 authors = ["Tracy Ma <1991md@gmail.com>"]
 
-
-
 [dependencies.rust-bindgen]
 git = "https://github.com/crabtw/rust-bindgen.git"
