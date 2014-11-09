@@ -1,2 +1,2 @@
-[dependencies.glfw]
-git = "https://github.com/bjz/glfw-rs.git"
+[dependencies.rust-bindgen]
+git = "https://github.com/crabtw/rust-bindgen.git"
