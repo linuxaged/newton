@@ -7,6 +7,9 @@ struct Quaternion {
 }
 
 impl Quaternion {
+    fn new(r: f32, i: f32, j: f32, k: f32) -> Quaternion {
+        Quaternion { r: r, i: i, j: j, k: k, data: [0, ..4]}
+    }
     fn normalize(&self) -> ret {
         let d = self.r * self.r + self.i * self.i   + self.j * self.j + self.k * self.k;
         if (d == 0) {
