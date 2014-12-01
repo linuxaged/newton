@@ -1,4 +1,3 @@
-*.lock
 current.racetmp
 .fringerprint/
 target/
