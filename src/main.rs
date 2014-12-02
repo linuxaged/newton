@@ -111,6 +111,7 @@ fn main() {
         }
 
         graphics.clear(clear_data, gfx::COLOR, &frame);
+        // https://github.com/gfx-rs/gfx-rs/blob/536d96cd9eb651a43cb37be142d1743e5c43601d/src/render/lib.rs#L183
         graphics.draw(&batch, &(), &frame);
         graphics.end_frame();
 
