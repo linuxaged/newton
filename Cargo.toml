@@ -9,6 +9,9 @@ git = "http://github.com/gfx-rs/gfx-rs"
 [dependencies.glfw]
 git = "https://github.com/bjz/glfw-rs.git"
 
+[dependencies.cgmath]
+git = "https://github.com/bjz/cgmath-rs"
+
 [[example]]
 name = "badbluefly"
 path = "example/badbluefly/main.rs"

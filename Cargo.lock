@@ -2,9 +2,15 @@
 name = "Newton"
 version = "0.0.1"
 dependencies = [
+ "cgmath 0.0.1 (git+https://github.com/bjz/cgmath-rs)",
  "gfx 0.1.0 (git+http://github.com/gfx-rs/gfx-rs)",
  "glfw 0.0.1 (git+https://github.com/bjz/glfw-rs.git)",
 ]
+
+[[package]]
+name = "cgmath"
+version = "0.0.1"
+source = "git+https://github.com/bjz/cgmath-rs#6f058eab4be48606baf476f1d82fd497c153b5a4"
 
 [[package]]
 name = "device"
