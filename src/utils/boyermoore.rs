@@ -1,17 +1,17 @@
-use std::io::File;
-use std::cmp;
-
 pub mod collada {
+    use std::io::File;
+    use std::cmp;
 
     pub struct BoyerMoore {
         pat: Vec<u8>,
         source: Vec<u8>,
         delta1: [int, ..256],
         delta2: Vec<int>,
+        repeat: bool, // the target string appear more than one time
     }
 
     impl BoyerMoore {
-        pub fn new(content: &str, target: &str) -> BoyerMoore {
+        pub fn new(content: &str, target: &str, repeat: bool) -> BoyerMoore {
             let pat = target.to_string().into_bytes();
             let source = content.to_string().into_bytes();
             let delta1 = BoyerMoore::make_delta1(pat.as_slice());
@@ -21,6 +21,7 @@ pub mod collada {
                 source: source,
                 delta1: delta1,
                 delta2: delta2,
+                repeat: repeat,
             }
         }
 
@@ -51,7 +52,8 @@ pub mod collada {
             kmp
         }
 
-        pub fn search(&self) -> Option<uint> {
+        pub fn search(&self) -> Option<Vec<uint>> {
+            let mut result: Vec<uint> = Vec::new();
             if self.pat.len() == 0 {
                 return None
             }
@@ -62,14 +64,25 @@ pub mod collada {
                     i = i-1;
                     j = j-1;
                 }
-
-
-                if j < 0 {
-                    return Some(i + j as uint + 1);
+                if !self.repeat { // only appear once
+                    if j < 0 {
+                        result.push(i + j as uint + 1);
+                        return Some(result);
+                    }
+                } else { // appear more than once
+                    if j < 0 {
+                        result.push(i + j as uint + 1);
+                    }
                 }
+                
                 i += cmp::max(self.delta1[self.source[i] as uint], self.delta2[j as uint]) as uint;
             }
-            None
+
+            if result.len() != 0 {
+                Some(result)
+            } else {
+                None
+            }
         }
     }
 
@@ -93,7 +106,7 @@ pub mod collada {
     fn test_find() {
         let path = Path::new("/tmp/data.txt");
         let raw_string = File::open(&path).read_to_string().unwrap();
-        let result = BoyerMoore::new(raw_string.as_slice(), "SIMPLE").search();
+        let result = BoyerMoore::new(raw_string.as_slice(), "SIMPLE", false).search();
         println!("{}", result);
     }
 }
