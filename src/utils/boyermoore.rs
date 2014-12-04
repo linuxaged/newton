@@ -58,24 +58,38 @@ pub mod collada {
                 return None
             }
             let mut i = self.pat.len() - 1;
-            while i < self.source.len() {
-                let mut j = (self.pat.len() - 1) as int;
-                while (j >= 0) && (self.source[i] == self.pat[j as uint]) {
-                    i = i-1;
-                    j = j-1;
-                }
-                if !self.repeat { // only appear once
+
+            if !self.repeat { // only appear once
+                while i < self.source.len() {
+                    let mut j = (self.pat.len() - 1) as int;
+                    while (j >= 0) && (self.source[i] == self.pat[j as uint]) {
+                        i = i-1;
+                        j = j-1;
+                    }
                     if j < 0 {
                         result.push(i + j as uint + 1);
                         return Some(result);
                     }
-                } else { // appear more than once
+                    i += cmp::max(self.delta1[self.source[i] as uint], self.delta2[j as uint]) as uint;
+                }
+            } else { // appear more than once
+                while i < self.source.len() {
+                    let mut j = (self.pat.len() - 1) as int;
+                    println!("[sta]i={},j={}", i, j);
+                    
+                    while (j >= 0) && (self.source[i] == self.pat[j as uint]) {
+                        i = i-1;
+                        j = j-1;
+                    }
                     if j < 0 {
                         result.push(i + j as uint + 1);
+                        i += self.pat.len();
+                        println!("i = {}, pat.len = {}", i, self.pat.len());
+                    } else {
+                        i += cmp::max(self.delta1[self.source[i] as uint], self.delta2[j as uint]) as uint;
                     }
+                    println!("[end]i={},j={}", i, j);
                 }
-                
-                i += cmp::max(self.delta1[self.source[i] as uint], self.delta2[j as uint]) as uint;
             }
 
             if result.len() != 0 {
@@ -90,7 +104,7 @@ pub mod collada {
     fn test_make_delta1() {
         let delta1 = BoyerMoore::make_delta1("EXAMPLE".to_string().into_bytes().as_slice());
         for d in range(0, delta1.len()) {
-            println!("[{}],{}", d, delta1[d]);
+            // println!("[{}],{}", d, delta1[d]);
         }
     }
 
@@ -98,7 +112,7 @@ pub mod collada {
     fn test_make_kmp() {
         let delta2 = BoyerMoore::make_kmp("ABCDABCEABCDABC".to_string().into_bytes().as_slice());
         for d in range(0, delta2.len()) {
-            println!("[{}],{}", d, delta2[d]);
+            // println!("[{}],{}", d, delta2[d]);
         }
     }
 
@@ -106,7 +120,7 @@ pub mod collada {
     fn test_find() {
         let path = Path::new("/tmp/data.txt");
         let raw_string = File::open(&path).read_to_string().unwrap();
-        let result = BoyerMoore::new(raw_string.as_slice(), "SIMPLE", false).search();
+        let result = BoyerMoore::new(raw_string.as_slice(), "SIMPLE", true).search();
         println!("{}", result);
     }
 }
