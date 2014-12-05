@@ -75,8 +75,6 @@ pub mod collada {
             } else { // appear more than once
                 while i < self.source.len() {
                     let mut j = (self.pat.len() - 1) as int;
-                    println!("[sta]i={},j={}", i, j);
-
                     while (j >= 0) && (self.source[i] == self.pat[ j as uint]) {
                         i = i-1;
                         j = j-1;
@@ -84,18 +82,13 @@ pub mod collada {
                     if j < 0 {
                         result.push(i + j as uint + 1);
                         i += self.pat.len() * 2;
-                        println!("i={},add by len", i);
                         continue;
                     }
-
                     i += cmp::max(self.delta1[self.source[i] as uint], self.delta2[j as uint]) as uint;
-
-                    println!("i={},j={}", i, j);
                 }
             }
 
             if result.len() != 0 {
-                println!("{}",result);
                 Some(result)
             } else {
                 None
