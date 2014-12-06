@@ -18,10 +18,8 @@ pub mod collada {
 			Collada{content: content, tag: ""}
 		}
 		fn parse_vertex(&self) -> [f32..] {
-	        let path = Path::new("/tmp/data.txt");
-			let raw_string = File::open(&path).read_to_string().unwrap();
-			let idx_lib_geo_start = BoyerMoore::new(raw_string.as_slice(), "<library_geometries>").search();
-			let idx_lib_geo_end = BoyerMoore::new(raw_string.as_slice()[idx_lib_geo_start, raw_string.len()], "</library_geometries>").search();
+			let idx_lib_geo_start = BoyerMoore::new(self.content.as_slice(), "<library_geometries>").search();
+			let idx_lib_geo_end = BoyerMoore::new(self.content.as_slice()[idx_lib_geo_start, raw_string.len()], "</library_geometries>").search();
 		}
 		pub fn parse(&self, t: ParseType) -> [f32..] {
 			match t {
@@ -31,5 +29,5 @@ pub mod collada {
 			}
 		}
 	}
-	
+
 }
