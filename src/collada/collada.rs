@@ -16,19 +16,21 @@ struct Collada {
 }
 
 impl Collada {
-	pub fn new(path: str) -> Collada {
-		let content = File::open(Path::new(path).read_to_string().unwrap());
+	pub fn new(path: &str) -> Collada {
+		let content = File::open(&Path::new(path)).read_to_string().unwrap();
 		Collada{content: content, tag: ParseType::none}
 	}
 
 	fn parse_vertex(&self) {
-		let idx_lib_geo_start = BoyerMoore::new(self.content.as_slice(), "<library_geometries>").search().unwrap();
-		let idx_lib_geo_end = BoyerMoore::new(self.content.as_slice()[idx_lib_geo_start..self.content.len()], "</library_geometries>").search().unwrap();
+		let idx_lib_geo_start = BoyerMoore::new(self.content.as_slice(), "<library_geometries>").search(false).unwrap();
+		let idx_lib_geo_end = BoyerMoore::new(self.content.as_slice()[idx_lib_geo_start[0]..self.content.len()], "</library_geometries>").search(false).unwrap();
 		println!("{},{}",idx_lib_geo_start, idx_lib_geo_end);
 	}
 	pub fn parse(&self, t: ParseType) {
 		match t {
-			ParseType::vertex => self.parse_vertex()
+			ParseType::vertex => self.parse_vertex(),
+			ParseType::triangle => (),
+			ParseType::none => (),
 		}
 	}
 }
