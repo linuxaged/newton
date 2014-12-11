@@ -1,5 +1,6 @@
 use std::io::File;
-use boyermoore;
+use boyermoore::BoyerMoore;
+
 // parse .dae file
 // <mesh> <source id = "">  </source> </mesh>
 // 需要先解析 source, 然后是 verteies, triangles
@@ -22,12 +23,12 @@ impl Collada {
 
 	fn parse_vertex(&self) {
 		let idx_lib_geo_start = BoyerMoore::new(self.content.as_slice(), "<library_geometries>").search().unwrap();
-		let idx_lib_geo_end = BoyerMoore::new(self.content.as_slice()[idx_lib_geo_start..raw_string.len()], "</library_geometries>").search().unwrap();
+		let idx_lib_geo_end = BoyerMoore::new(self.content.as_slice()[idx_lib_geo_start..self.content.len()], "</library_geometries>").search().unwrap();
 		println!("{},{}",idx_lib_geo_start, idx_lib_geo_end);
 	}
 	pub fn parse(&self, t: ParseType) {
 		match t {
-			ParseType::vertex => parse_vertex()
+			ParseType::vertex => self.parse_vertex()
 		}
 	}
 }
