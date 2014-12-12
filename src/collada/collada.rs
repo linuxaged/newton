@@ -1,6 +1,6 @@
 use std::io::File;
 use boyermoore::BoyerMoore;
-
+use std::os;
 // parse .dae file
 // <mesh> <source id = "">  </source> </mesh>
 // 需要先解析 source, 然后是 verteies, triangles
@@ -38,6 +38,7 @@ impl Collada {
 
 #[test]
 fn test_parse() {
-	let collada = Collada::new("example/models/Badblue_fly.dae");
+	println!("{}",os::getcwd().unwrap().display());
+	let collada = Collada::new("../../example/models/Badblue_fly.dae");
 	collada.parse(ParseType::vertex);
 }
