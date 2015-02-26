@@ -1,7 +1,11 @@
 [package]
-name = "Newton"
+name = "newton"
 version = "0.0.1"
 authors = ["Tracy Ma <1991md@gmail.com>"]
+
+[lib]
+name = "newton"
+path = "src/newton/lib.rs"
 
 [dependencies.gfx]
 git = "http://github.com/gfx-rs/gfx-rs"
@@ -11,10 +15,6 @@ git = "https://github.com/bjz/glfw-rs.git"
 
 [dependencies.cgmath]
 git = "https://github.com/bjz/cgmath-rs"
-
-[[example]]
-name = "badbluefly"
-path = "example/badbluefly/main.rs"
 
 [[example]]
 name = "cocos"

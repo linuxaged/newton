@@ -1,22 +1,19 @@
-extern crate "gfx_gl" as gl;
-
 struct MeshVertexAttribs {
-    size: GLint,
-    t: gl::types::GLenum,
-    vertexAttrib: int,
-    attribSizeBytes: int,
+    size: gfx::gfx_gl::types::GLint,
+    t: gfx::gfx_gl::types::GLenum,
+    vertexAttrib: i32,
+    attribSizeBytes: i32,
 }
 
 struct MeshData {
-    let IndexArray = Vec<u16>,
     vertex: Vec<f32>,
-    vertexSizeInFloat: int,
-    subMeshIndices: Vec<IndexArray>,
+    vertexSizeInFloat: i32,
+    subMeshIndices: Vec<Vec<u16>>,
     subMeshIds: Vec<String>,
     subMeshAABB: Vec<AABB>,
-    numIndex: int,
+    numIndex: i32,
     atttibs: Vec<MeshVertexAttribs>,
-    attribCount: int
+    attribCount: i32
 }
 
 struct MeshDatas {

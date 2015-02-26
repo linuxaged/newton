@@ -49,7 +49,6 @@ impl fmt::Show for Vector3 {
 }
 
 
-
 #[test]
 fn test_mul() {
     let v0 = Vector3{x: 1.0f32,y: 2.0f32,z: 3.0f32};
