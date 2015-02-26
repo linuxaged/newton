@@ -4,7 +4,7 @@ use std::io::prelude::*;
 use std::fs::File;
 
 extern crate newton;
-use newton::c3t;
+use newton::cocos::c3t;
 use newton::math::vector3;
 
 fn main() {

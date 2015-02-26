@@ -1,6 +1,14 @@
+extern crate gfx_gl;
+use math;
+
+struct AABB {
+    _min: math::vector3::Vector3,
+    _max: math::vector3::Vector3
+}
+
 struct MeshVertexAttribs {
-    size: gfx::gfx_gl::types::GLint,
-    t: gfx::gfx_gl::types::GLenum,
+    size: gfx_gl::types::GLint,
+    t: gfx_gl::types::GLenum,
     vertexAttrib: i32,
     attribSizeBytes: i32,
 }

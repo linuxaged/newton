@@ -1,6 +1,7 @@
 use std::fmt;
 use std::ops::{Add, Sub, Mul};
 
+#[derive(Debug, Copy)]
 pub struct Vector3 {
     pub x: f32,
     pub y: f32,
@@ -42,18 +43,11 @@ impl Mul for Vector3 {
     }
 }
 
-impl fmt::Show for Vector3 {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({}, {}, {})", self.x, self.y, self.z)
-    }
-}
-
-
 #[test]
 fn test_mul() {
     let v0 = Vector3{x: 1.0f32,y: 2.0f32,z: 3.0f32};
     let v1 = Vector3{x: 2.0f32,y: 3.0f32,z: 4.0f32};
-    println!("{}",v0 * v1);
-    println!("{}",Vector3::new(1.0,2.0,3.0).magnitude());
-    println!("{}",Vector3::new(7.0,8.0,9.0).add_scaled_vector(&v0, 2.0));
+    println!("{:?}",v0 * v1);
+    println!("{:?}",Vector3::new(1.0,2.0,3.0).magnitude());
+    println!("{:?}",Vector3::new(7.0,8.0,9.0).add_scaled_vector(&v0, 2.0));
 }

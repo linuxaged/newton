@@ -4,6 +4,7 @@ version = "0.0.1"
 dependencies = [
  "cgmath 0.0.6 (git+https://github.com/bjz/cgmath-rs)",
  "gfx 0.1.7 (git+http://github.com/gfx-rs/gfx-rs)",
+ "gfx_gl 0.1.1 (git+http://github.com/gfx-rs/gfx_gl)",
  "glfw 0.0.4 (git+https://github.com/bjz/glfw-rs.git)",
 ]
 
@@ -41,6 +42,17 @@ dependencies = [
  "gfx_gl 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "gfx_gl"
+version = "0.1.1"
+source = "git+http://github.com/gfx-rs/gfx_gl#aaa0e59854b57e03a483d56e2f0eb7041788977d"
+dependencies = [
+ "gl_common 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gl_generator 0.0.18 (registry+https://github.com/rust-lang/crates.io-index)",
+ "khronos_api 0.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
