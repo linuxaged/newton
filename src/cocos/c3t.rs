@@ -1,4 +1,4 @@
-extern crate gfx_gl;
+extern crate gl;
 use math;
 
 struct AABB {
@@ -7,8 +7,8 @@ struct AABB {
 }
 
 struct MeshVertexAttribs {
-    size: gfx_gl::types::GLint,
-    t: gfx_gl::types::GLenum,
+    size: gl::types::GLint,
+    t: gl::types::GLenum,
     vertexAttrib: i32,
     attribSizeBytes: i32,
 }

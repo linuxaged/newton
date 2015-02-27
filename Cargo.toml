@@ -7,20 +7,11 @@ authors = ["Tracy Ma <1991md@gmail.com>"]
 name = "newton"
 path = "src/lib.rs"
 
-[dependencies.gfx]
-git = "http://github.com/gfx-rs/gfx-rs"
+[dependencies.glutin]
+git = "https://github.com/tomaka/glutin"
 
-[dependencies.gfx_macros]
-git = "https://github.com/gfx-rs/gfx-rs"
-
-[dependencies.glfw]
-git = "https://github.com/bjz/glfw-rs.git"
-
-[dependencies.cgmath]
-git = "https://github.com/bjz/cgmath-rs"
-
-[dependencies.gfx_gl]
-git = "http://github.com/gfx-rs/gfx_gl"
+[dependencies.gl]
+git = "https://github.com/bjz/gl-rs"
 
 [[example]]
 name = "cocos"
