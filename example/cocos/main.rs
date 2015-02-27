@@ -11,19 +11,24 @@ extern crate glutin;
 extern crate libc;
 extern crate gl;
 
-fn get_verts() {
+fn get_vert_idx() {
     let mut f = File::open("orc.c3t").unwrap();
 	let mut s = String::new();
 	f.read_to_string(&mut s);
 
 	match json::from_str(&s) {
-        Ok(json) => println!("{}", json.as_object().unwrap().get("meshes").unwrap().as_array().unwrap()[0].as_object().unwrap().get("vertices").unwrap()),
+        // Ok(json) => println!("{:?}", json.as_object().unwrap().get("meshes")
+        // 	.unwrap().as_array().unwrap()[0].as_object()
+        // 	.unwrap().get("vertices").unwrap().as_array().unwrap()),
+		Ok(json) => println!("{:?}", json.as_object().unwrap().get("meshes")
+        	.unwrap().as_array().unwrap()[0].as_object()
+        	.unwrap().get("parts").unwrap().as_array().unwrap()[0].as_object().unwrap().get("indices").unwrap().as_array().unwrap()),
         Err(err) => println!("{}", err),
     }
 }
 
 fn main() {
-	get_verts();
+	get_vert_idx();
 
 	let window = glutin::Window::new().unwrap();
 
