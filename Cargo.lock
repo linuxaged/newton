@@ -2,8 +2,8 @@
 name = "newton"
 version = "0.0.1"
 dependencies = [
- "gl 0.0.8 (git+https://github.com/bjz/gl-rs)",
- "glutin 0.0.5 (git+https://github.com/tomaka/glutin)",
+ "gl 0.0.9 (git+https://github.com/bjz/gl-rs)",
+ "glutin 0.0.6 (git+https://github.com/tomaka/glutin)",
 ]
 
 [[package]]
@@ -51,8 +51,8 @@ dependencies = [
 
 [[package]]
 name = "gl"
-version = "0.0.8"
-source = "git+https://github.com/bjz/gl-rs#9dfd20a76bb18e9ef0cb6dfe825454219ea6c7dd"
+version = "0.0.9"
+source = "git+https://github.com/bjz/gl-rs#5867745f94b2c9f1a37b079f0ddee887651f1f5f"
 dependencies = [
  "gl_common 0.0.4 (git+https://github.com/bjz/gl-rs)",
  "gl_generator 0.0.19 (git+https://github.com/bjz/gl-rs)",
@@ -63,7 +63,7 @@ dependencies = [
 [[package]]
 name = "gl_common"
 version = "0.0.4"
-source = "git+https://github.com/bjz/gl-rs#9dfd20a76bb18e9ef0cb6dfe825454219ea6c7dd"
+source = "git+https://github.com/bjz/gl-rs#5867745f94b2c9f1a37b079f0ddee887651f1f5f"
 dependencies = [
  "libc 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -79,11 +79,11 @@ dependencies = [
 [[package]]
 name = "gl_generator"
 version = "0.0.19"
-source = "git+https://github.com/bjz/gl-rs#9dfd20a76bb18e9ef0cb6dfe825454219ea6c7dd"
+source = "git+https://github.com/bjz/gl-rs#5867745f94b2c9f1a37b079f0ddee887651f1f5f"
 dependencies = [
  "khronos_api 0.0.5 (git+https://github.com/bjz/gl-rs)",
  "log 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "xml-rs 0.1.19 (registry+https://github.com/rust-lang/crates.io-index)",
+ "xml-rs 0.1.20 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -93,13 +93,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "khronos_api 0.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "xml-rs 0.1.19 (registry+https://github.com/rust-lang/crates.io-index)",
+ "xml-rs 0.1.20 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "glutin"
-version = "0.0.5"
-source = "git+https://github.com/tomaka/glutin#76a69e2e7bf5461aa1831a875a60d1815c52fb40"
+version = "0.0.6"
+source = "git+https://github.com/tomaka/glutin#65046ffc41790e9a7c4fe26995c2751e8a940af6"
 dependencies = [
  "android_glue 0.0.1 (git+https://github.com/tomaka/android-rs-glue)",
  "cocoa 0.1.1 (git+https://github.com/servo/rust-cocoa)",
@@ -126,7 +126,7 @@ dependencies = [
 [[package]]
 name = "khronos_api"
 version = "0.0.5"
-source = "git+https://github.com/bjz/gl-rs#9dfd20a76bb18e9ef0cb6dfe825454219ea6c7dd"
+source = "git+https://github.com/bjz/gl-rs#5867745f94b2c9f1a37b079f0ddee887651f1f5f"
 
 [[package]]
 name = "khronos_api"
@@ -161,7 +161,7 @@ dependencies = [
 
 [[package]]
 name = "xml-rs"
-version = "0.1.19"
+version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
