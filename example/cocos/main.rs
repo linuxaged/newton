@@ -1,3 +1,4 @@
+// file io
 use std::io::prelude::*;
 use std::fs::File;
 extern crate serialize;
@@ -6,12 +7,12 @@ use serialize::json;
 extern crate newton;
 use newton::cocos::c3t;
 use newton::math::vector3;
-
+// render
 extern crate glutin;
 extern crate libc;
 extern crate gl;
 use gl::types::*;
-
+// native
 use std::mem;
 use std::ptr;
 use std::str;
@@ -24,17 +25,17 @@ fn get_vert_idx() {
 	f.read_to_string(&mut s);
 
 	match json::from_str(&s) {
-        // Ok(json) => println!("{:?}", json.as_object().unwrap().get("meshes")
-        // 	.unwrap().as_array().unwrap()[0].as_object()
-        // 	.unwrap().get("vertices").unwrap().as_array().unwrap()),
-		Ok(json) => println!("{:?}", json.as_object().unwrap().get("meshes")
+        Ok(json) => println!("{:?}", json.as_object().unwrap().get("meshes")
         	.unwrap().as_array().unwrap()[0].as_object()
-        	.unwrap().get("parts").unwrap().as_array().unwrap()[0].as_object().unwrap().get("indices").unwrap().as_array().unwrap()),
+        	.unwrap().get("vertices").unwrap().as_array().unwrap()),
+		// Ok(json) => println!("{:?}", json.as_object().unwrap().get("meshes")
+  //       	.unwrap().as_array().unwrap()[0].as_object()
+  //       	.unwrap().get("parts").unwrap().as_array().unwrap()[0].as_object().unwrap().get("indices").unwrap().as_array().unwrap()),
         Err(err) => println!("{}", err),
     }
 }
 
-// Vertex data
+// 创建从 json 中读取到的顶点数据
 static VERTEX_DATA: [GLfloat; 6] = [
      0.0,  0.5,
      0.5, -0.5,
