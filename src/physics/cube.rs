@@ -29,14 +29,14 @@ struct State {
 
 impl State {
     pub fn recalculate() {
-        velocity = momentum * inverseMass;
-        angularVelocity = angularMomentum * inverseInertiaTensor;
-        orientation.normalize();
-        spin = 0.5 * Quaternion(0, angularVelocity.x, angularVelocity.y, angularVelocity.z) * orientation;
+        self.velocity = self.momentum * self.inverseMass;
+        self.angularVelocity = self.angularMomentum * self.inverseInertiaTensor;
+        self.orientation.normalize();
+        self.spin = 0.5 * Quaternion(0, self.angularVelocity.x, self.angularVelocity.y, self.angularVelocity.z) * self.orientation;
         Matrix translation;
-        translation.translate(position);
-        bodyToWorld = translation * orientation.matrix();
-        worldToBody = bodyToWorld.inverse();
+        self.translation.translate(position);
+        self.bodyToWorld = translation * orientation.matrix();
+        self.worldToBody = bodyToWorld.inverse();
     }
 }
 
@@ -56,14 +56,14 @@ impl Cube {
     pub fn new() -> Cube {
         Cube{previous: State{
                 size = 1;
-mass = 1;
-inverseMass = 1.0f / current.mass;
-position = Vector(2,0,0);
-momentum = Vector(0,0,-10);
-orientation.identity();
-angularMomentum = Vector(0,0,0);
-inertiaTensor = current.mass * current.size * current.size * 1.0f / 6.0f;
-inverseInertiaTensor = 1.0f / current.inertiaTensor;
+                mass = 1;
+                inverseMass = 1.0f / current.mass;
+                position = Vector(2,0,0);
+                momentum = Vector(0,0,-10);
+                orientation.identity();
+                angularMomentum = Vector(0,0,0);
+                inertiaTensor = current.mass * current.size * current.size * 1.0f / 6.0f;
+                inverseInertiaTensor = 1.0f / current.inertiaTensor;
             },current: previous
         }
     }
