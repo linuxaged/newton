@@ -41,10 +41,10 @@ impl State {
 }
 
 struct Derivative {
-    velocity:   Vector3                ///< velocity is the derivative of position.
-    force:      Vector3                   ///< force in the derivative of momentum.
-    spin:       Quaternion                ///< spin is the derivative of the orientation quaternion.
-    torque:     Vector3                  ///< torque is the derivative of angular momentum.
+    velocity:   Vector3,                ///< velocity is the derivative of position.
+    force:      Vector3,                   ///< force in the derivative of momentum.
+    spin:       Quaternion,                ///< spin is the derivative of the orientation quaternion.
+    torque:     Vector3,                 ///< torque is the derivative of angular momentum.
 };
 
 struct Cube {
