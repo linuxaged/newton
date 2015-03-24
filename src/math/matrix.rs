@@ -1,3 +1,5 @@
+use std::simd::f32x4;
+
 struct Matrix {
-    Field: typ
+    a: f32x4,
 }
