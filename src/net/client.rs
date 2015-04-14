@@ -9,7 +9,7 @@ fn main() {
     // Send a reply to the socket we received data from
     let buf = &mut buf[..amt];
     buf.reverse();
-    let serverIp = SocketAddrV4.new(Ipv4Addr::new(127,0,0,1), 4444);
+    let serverIp = SocketAddrV4::new(Ipv4Addr::new(127,0,0,1), 4444);
     (socket.send_to(buf, &serverIp)).unwrap();
 
     drop(socket); // close the socket
