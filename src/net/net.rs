@@ -13,6 +13,7 @@ trait ReliableConnection {
 }
 
 impl Connection for i32 {
+	name: String;
 	fn isConnect(&self) -> bool {
 		false
 	}
