@@ -1,5 +1,6 @@
 use std::net::UdpSocket;
 use std::collections::LinkedList;
+use std::vec;
 
 struct PacketData
 {
@@ -33,12 +34,12 @@ struct ReliabilitySystem {
     rtt            : f32,              // estimated round trip time
     rtt_maximum: f32,                  // maximum expected round trip time (hard coded to one second for the moment)
 
-    std::vector<uint32_t> acks;     // acked packets from last set of packet receives. cleared each update!
+    acks: Vec<u32>;     // acked packets from last set of packet receives. cleared each update!
 
-    PacketQueue sentQueue;              // sent packets used to calculate sent bandwidth (kept until rtt_maximum)
-    PacketQueue pendingAckQueue;        // sent packets which have not been acked yet (kept until rtt_maximum * 2 )
-    PacketQueue receivedQueue;          // received packets for determining acks to send (kept up to most recent recv sequence - 32)
-    PacketQueue ackedQueue;             // acked packets (kept until rtt_maximum * 2)
+    sentQueue: PacketQueue,              // sent packets used to calculate sent bandwidth (kept until rtt_maximum)
+    pendingAckQueue: PacketQueue,        // sent packets which have not been acked yet (kept until rtt_maximum * 2 )
+    receivedQueue: PacketQueue,          // received packets for determining acks to send (kept up to most recent recv sequence - 32)
+    ackedQueue: PacketQueue,             // acked packets (kept until rtt_maximum * 2)
 }
 
 struct ReliableConnection {
