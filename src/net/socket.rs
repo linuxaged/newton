@@ -2,21 +2,54 @@ use std::net::UdpSocket;
 use std::collections::LinkedList;
 use std::vec;
 
-struct PacketData
-{
+struct PacketData {
     sequence: u32,          // packet sequence number
-    time: f32,                     // time offset since packet was sent or received (depending on context)
-    size: u32,                       // packet size in bytes
-};
+    time: f32,              // time offset since packet was sent or received (depending on context)
+    size: u32,              // packet size in bytes
+}
 
 trait PacketQueue {
-	fn exists(mut sequence: u32) -> bool;
-	fn insert_sorted(p: &PacketData,  max_sequence: u32);
-	fn verify_sorted(max_sequence: u32);
+	fn exists(&self, mut sequence: u32) -> bool;
+	fn insert_sorted(&self, p: &PacketData,  max_sequence: u32);
+}
+
+#[inline]
+fn sequence_more_recent(s1: u32, s2: u32, max_sequence: u32) -> bool {
+	(( s1 > s2 ) && ( s1 - s2 <= max_sequence / 2 )) || (( s2 > s1 ) && ( s2 - s1 > max_sequence / 2 ))
 }
 
 impl PacketQueue for LinkedList<PacketData> {
-	
+	fn exists(&self, mut sequence: u32) -> bool {
+		for (i, elt) in self.iter().enumerate() {
+			if elt.sequence == sequence {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	fn insert_sorted(&self, p: &PacketData, max_sequence: u32) {
+		if self.is_empty() {
+			self.push_back(p);
+		}
+		else {
+            if ( !sequence_more_recent( p.sequence, self.front().sequence, max_sequence ) ) {
+                self.push_front( p );
+            }
+            else if ( sequence_more_recent( p.sequence, self.back().sequence, max_sequence ) ) {
+                self.push_back( p );
+            }
+            else {
+                for (i, elt) in self.iter_mut().enumerate() {
+                    // assert( itor->sequence != p.sequence );
+                    if ( sequence_more_recent( elt.sequence, p.sequence, max_sequence ) ) {
+                        self.insert_next(p);
+                        break;
+                    }
+                }
+            }
+        }
+	}
 }
 
 struct ReliabilitySystem {
@@ -34,7 +67,7 @@ struct ReliabilitySystem {
     rtt            : f32,              // estimated round trip time
     rtt_maximum: f32,                  // maximum expected round trip time (hard coded to one second for the moment)
 
-    acks: Vec<u32>;     // acked packets from last set of packet receives. cleared each update!
+    acks: Vec<u32>,     // acked packets from last set of packet receives. cleared each update!
 
     sentQueue: PacketQueue,              // sent packets used to calculate sent bandwidth (kept until rtt_maximum)
     pendingAckQueue: PacketQueue,        // sent packets which have not been acked yet (kept until rtt_maximum * 2 )
@@ -55,4 +88,11 @@ impl ReliableConnection {
 	fn Update() {
 
 	}
+}
+
+#[test]
+fn test_linked_list() {
+	let ll: LinkedList<PacketData> = LinkedList::new();
+	let pd0 = PacketData{sequence: 0, time: 0.0f32, size: 128u32};
+	ll.insert_sorted(&pd0, 128u32);
 }
