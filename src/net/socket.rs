@@ -109,28 +109,28 @@ impl ReliableConnection {
     fn new(&self) -> ReliableConnection {
 
     }
-    fn start(&self, port: u16)
+    fn start(&self, addr: SocketAddrV4)
     {
-        assert!( !running );
+        assert!( !self.running );
         println!( "start connection on port {}", port );
-        if ( !socket.Open( port ) )
-            return false;
-        running = true;
-        OnStart();
+        // if ( !socket.bind( addr ) )
+        //     return false;
+        self.running = true;
+        on_start();
         return true;
     }
 
     fn stop(&self)
     {
-        assert( running );
+        assert!( running );
         println!("stop connection");
-        bool connected = IsConnected();
-        ClearData();
-        socket.Close();
-        running = false;
-        if ( connected )
-            OnDisconnect();
-        OnStop();
+        self.connected = is_connected();
+        clear_data();
+        drop(socket);
+        self.running = false;
+        if ( self.connected )
+            on_disconnect();
+        on_stop();
     }
 
     fn is_running(&self) -> bool
@@ -141,8 +141,8 @@ impl ReliableConnection {
     fn listen(&self)
     {
         printf( "server listening for connection\n" );
-        bool connected = IsConnected();
-        ClearData();
+        self.connected = is_connected();
+        clear_data();
         if ( connected )
             OnDisconnect();
         mode = Server;
@@ -151,14 +151,13 @@ impl ReliableConnection {
 
     fn connect(&self, addr: SocketAddrV4)
     {
-        printf( "client connecting to %hhu.%hhu.%hhu.%hhu:%d\n",
-                addr.GetA(), addr.GetB(), addr.GetC(), addr.GetD(), addr.GetPort() );
-        bool connected = IsConnected();
-        ClearData();
-        if ( connected )
-            OnDisconnect();
-        mode = Client;
-        state = Connecting;
+        printf( "client connecting to {}", addr);
+        self.connected = is_connected();
+        clear_data();
+        if ( self.connected )
+            on_disconnect();
+        self.mode = Mode.Client;
+        self.state = State.Connecting;
         self.address = addr;
     }
 
