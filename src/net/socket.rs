@@ -1,3 +1,6 @@
+#![feature(collections)]
+mod socket {
+
 use std::net::UdpSocket;
 use std::collections::LinkedList;
 use std::vec;
@@ -10,7 +13,7 @@ struct PacketData {
 
 trait PacketQueue {
 	fn exists(&self, mut sequence: u32) -> bool;
-	fn insert_sorted(&self, p: &PacketData,  max_sequence: u32);
+	fn insert_sorted(&mut self, p: PacketData,  max_sequence: u32);
 }
 
 #[inline]
@@ -28,25 +31,25 @@ impl PacketQueue for LinkedList<PacketData> {
 		return false;
 	}
 
-	fn insert_sorted(&self, p: &PacketData, max_sequence: u32) {
+	fn insert_sorted(&mut self, p: PacketData, max_sequence: u32) {
 		if self.is_empty() {
 			self.push_back(p);
 		}
 		else {
-            if ( !sequence_more_recent( p.sequence, self.front().sequence, max_sequence ) ) {
+            if ( !sequence_more_recent( p.sequence, self.front().unwrap().sequence, max_sequence ) ) {
                 self.push_front( p );
             }
-            else if ( sequence_more_recent( p.sequence, self.back().sequence, max_sequence ) ) {
-                self.push_back( p );
+            else if ( sequence_more_recent( p.sequence, self.back().unwrap().sequence, max_sequence ) ) {
+                self.push_back(p );
             }
             else {
-                for (i, elt) in self.iter_mut().enumerate() {
-                    // assert( itor->sequence != p.sequence );
-                    if ( sequence_more_recent( elt.sequence, p.sequence, max_sequence ) ) {
-                        self.insert_next(p);
+            	let mut itor = self.iter_mut();
+            	loop {
+            		if ( sequence_more_recent( itor.next().unwrap().sequence, p.sequence, max_sequence ) ) {
+                        itor.insert_next(p);
                         break;
                     }
-                }
+            	}
             }
         }
 	}
@@ -69,10 +72,10 @@ struct ReliabilitySystem {
 
     acks: Vec<u32>,     // acked packets from last set of packet receives. cleared each update!
 
-    sentQueue: PacketQueue,              // sent packets used to calculate sent bandwidth (kept until rtt_maximum)
-    pendingAckQueue: PacketQueue,        // sent packets which have not been acked yet (kept until rtt_maximum * 2 )
-    receivedQueue: PacketQueue,          // received packets for determining acks to send (kept up to most recent recv sequence - 32)
-    ackedQueue: PacketQueue,             // acked packets (kept until rtt_maximum * 2)
+    sentQueue: LinkedList<PacketData>,              // sent packets used to calculate sent bandwidth (kept until rtt_maximum)
+    pendingAckQueue: LinkedList<PacketData>,        // sent packets which have not been acked yet (kept until rtt_maximum * 2 )
+    receivedQueue: LinkedList<PacketData>,          // received packets for determining acks to send (kept up to most recent recv sequence - 32)
+    ackedQueue: LinkedList<PacketData>,             // acked packets (kept until rtt_maximum * 2)
 }
 
 struct ReliableConnection {
@@ -81,7 +84,7 @@ struct ReliableConnection {
 	timeout: f32,
 	timeoutAccumulator: f32,
 
-	reliableSsytem: ReliableConnection,
+	reliabilitySystem: ReliabilitySystem,
 }
 
 impl ReliableConnection {
@@ -92,7 +95,9 @@ impl ReliableConnection {
 
 #[test]
 fn test_linked_list() {
-	let ll: LinkedList<PacketData> = LinkedList::new();
+	let mut ll: LinkedList<PacketData> = LinkedList::new();
 	let pd0 = PacketData{sequence: 0, time: 0.0f32, size: 128u32};
-	ll.insert_sorted(&pd0, 128u32);
+	ll.insert_sorted(pd0, 128u32);
 }
+
+} // end of mod socket
