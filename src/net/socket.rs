@@ -195,7 +195,7 @@ impl ReliabilitySystem {
 
     fn generate_ack_bits( uint32_t ack: u32, received_queue: &PacketQueue , max_sequence: u32) -> u32
     {
-        uint32_t ack_bits = 0;
+        let ack_bits = 0u32;
         for ( PacketQueue::const_iterator itor = received_queue.begin(); itor != received_queue.end(); itor++ )
         {
             if ( itor->sequence == ack || sequence_more_recent( itor->sequence, ack, max_sequence ) )
