@@ -56,6 +56,7 @@ impl PacketQueue for LinkedList<PacketData> {
     }
 }
 
+#[deriving(Default)]
 struct ReliabilitySystem {
     max_sequence:    u32,                    // maximum sequence value before wrap around (used to test sequence wrap at low # values)
     local_sequence:  u32,                    // local sequence number for most recently sent packet
@@ -79,6 +80,296 @@ struct ReliabilitySystem {
     ackedQueue:      LinkedList<PacketData>, // acked packets (kept until rtt_maximum * 2)
 }
 
+impl ReliabilitySystem {
+    fn new(&self) -> ReliabilitySystem {
+
+    }
+
+    fn reset(&self)
+    {
+        self.local_sequence = 0;
+        self.remote_sequence = 0;
+        self.sentQueue.clear();
+        self.receivedQueue.clear();
+        self.pendingAckQueue.clear();
+        self.ackedQueue.clear();
+        self.sent_packets = 0;
+        self.recv_packets = 0;
+        self.lost_packets = 0;
+        self.acked_packets = 0;
+        self.sent_bandwidth = 0.0f32;
+        self.acked_bandwidth = 0.0f32;
+        self.rtt = 0.0f32;
+        self.rtt_maximum = 1.0f32;
+    }
+
+    fn PacketSent(&self, size: u32 )
+    {
+        if ( self.sentQueue.exists( local_sequence ) )
+        {
+            println!( "local sequence {} exists", local_sequence );
+            for ( PacketQueue::iterator itor = sentQueue.begin(); itor != sentQueue.end(); ++itor )
+                println!( "{}", itor->sequence );
+        }
+        assert!( !sentQueue.exists( local_sequence ) );
+        assert!( !pendingAckQueue.exists( local_sequence ) );
+        let data = PacketData::new{};
+        data.sequence = local_sequence;
+        data.time = 0.0f;
+        data.size = size;
+        sentQueue.push_back( data );
+        pendingAckQueue.push_back( data );
+        sent_packets++;
+        local_sequence++;
+        if ( local_sequence > max_sequence )
+            local_sequence = 0;
+    }
+
+    fn PacketReceived(&self, sequence: u32, size: u32 )
+    {
+        recv_packets++;
+        if ( receivedQueue.exists( sequence ) )
+            return;
+        PacketData data;
+        data.sequence = sequence;
+        data.time = 0.0f;
+        data.size = size;
+        receivedQueue.push_back( data );
+        if ( sequence_more_recent( sequence, remote_sequence, max_sequence ) )
+            remote_sequence = sequence;
+    }
+
+    fn GenerateAckBits() -> u32
+    {
+        return generate_ack_bits( GetRemoteSequence(), receivedQueue, max_sequence );
+    }
+
+    fn ProcessAck( ack: u32, ack_bits: u32 )
+    {
+        process_ack( ack, ack_bits, pendingAckQueue, ackedQueue, acks, acked_packets, rtt, max_sequence );
+    }
+
+    fn Update( deltaTime: f32 )
+    {
+        acks.clear();
+        AdvanceQueueTime( deltaTime );
+        UpdateQueues();
+        UpdateStats();
+
+        // Validate();
+
+    }
+
+    // fn Validate()
+    // {
+    //     sentQueue.verify_sorted( max_sequence );
+    //     receivedQueue.verify_sorted( max_sequence );
+    //     pendingAckQueue.verify_sorted( max_sequence );
+    //     ackedQueue.verify_sorted( max_sequence );
+    // }
+
+    // utility functions
+
+    fn sequence_more_recent( uint32_t s1, uint32_t s2, uint32_t max_sequence ) -> bool
+    {
+        return (( s1 > s2 ) && ( s1 - s2 <= max_sequence / 2 )) || (( s2 > s1 ) && ( s2 - s1 > max_sequence / 2 ));
+    }
+
+    fn bit_index_for_sequence( sequence: u32,  ack: u32, max_sequence: u32 ) -> i32
+    {
+        assert!( sequence != ack );
+        assert!( !sequence_more_recent( sequence, ack, max_sequence ) );
+        if ( sequence > ack )
+        {
+            assert!( ack < 33 );
+            assert!( max_sequence >= sequence );
+            return ack + ( max_sequence - sequence );
+        }
+        else
+        {
+            assert!( ack >= 1 );
+            assert!( sequence <= ack - 1 );
+            return ack - 1 - sequence;
+        }
+    }
+
+    fn generate_ack_bits( uint32_t ack: u32, received_queue: &PacketQueue , max_sequence: u32) -> u32
+    {
+        uint32_t ack_bits = 0;
+        for ( PacketQueue::const_iterator itor = received_queue.begin(); itor != received_queue.end(); itor++ )
+        {
+            if ( itor->sequence == ack || sequence_more_recent( itor->sequence, ack, max_sequence ) )
+                break;
+            int bit_index = bit_index_for_sequence( itor->sequence, ack, max_sequence );
+            if ( bit_index <= 31 )
+                ack_bits |= 1 << bit_index;
+        }
+        return ack_bits;
+    }
+
+    fn process_ack(&self, ack: u32,  ack_bits: u32,
+                             pending_ack_queue: &PacketQueue, acked_queue: &PacketQueue,
+                             std::vector<uint32_t> &acks, acked_packets: u32,
+                             rtt: &f32, max_sequence: u32 )
+    {
+        if ( pending_ack_queue.empty() )
+            return;
+
+        PacketQueue::iterator itor = pending_ack_queue.begin();
+        while ( itor != pending_ack_queue.end() )
+        {
+            bool acked = false;
+
+            if ( itor->sequence == ack )
+            {
+                acked = true;
+            }
+            else if ( !sequence_more_recent( itor->sequence, ack, max_sequence ) )
+            {
+                int bit_index = bit_index_for_sequence( itor->sequence, ack, max_sequence );
+                if ( bit_index <= 31 )
+                    acked = ( ack_bits >> bit_index ) & 1;
+            }
+
+            if ( acked )
+            {
+                rtt += ( itor->time - rtt ) * 0.1f;
+
+                acked_queue.insert_sorted( *itor, max_sequence );
+                acks.push_back( itor->sequence );
+                acked_packets++;
+                itor = pending_ack_queue.erase( itor );
+            }
+            else
+                ++itor;
+        }
+    }
+
+    // data accessors
+
+    fn GetLocalSequence(&self) -> u32
+    {
+        self.local_sequence
+    }
+
+    fn GetRemoteSequence(&self) -> u32
+    {
+        self.remote_sequence
+    }
+
+    fn GetMaxSequence(&self) -> u32
+    {
+        self.max_sequence
+    }
+
+    fn GetAcks( uint32_t **ACKs, uint32_t &ack_count )
+    {
+        *ACKs = &this->acks[0];
+        ack_count = static_cast<uint32_t>(this->acks.size());
+    }
+
+    fn GetSentPackets() -> u32
+    {
+        self.sent_packets
+    }
+
+    fn GetReceivedPackets() -> u32
+    {
+        self.recv_packets
+    }
+
+    fn GetLostPackets() -> u32
+    {
+        self.lost_packets
+    }
+
+    fn GetAckedPackets() -> u32
+    {
+        self.acked_packets
+    }
+
+    fn GetSentBandwidth() -> f32
+    {
+        self.sent_bandwidth
+    }
+
+    fn GetAckedBandwidth(&self) -> f32
+    {
+        self.acked_bandwidth
+    }
+
+    fn GetRoundTripTime(&self) -> f32
+    {
+        self.rtt
+    }
+
+    fn GetHeaderSize() -> i32
+    {
+        12
+    }
+
+    fn AdvanceQueueTime( deltaTime: f32 )
+    {
+        for ( PacketQueue::iterator itor = sentQueue.begin(); itor != sentQueue.end(); itor++ )
+            itor->time += deltaTime;
+
+        for ( PacketQueue::iterator itor = receivedQueue.begin(); itor != receivedQueue.end(); itor++ )
+            itor->time += deltaTime;
+
+        for ( PacketQueue::iterator itor = pendingAckQueue.begin(); itor != pendingAckQueue.end(); itor++ )
+            itor->time += deltaTime;
+
+        for ( PacketQueue::iterator itor = ackedQueue.begin(); itor != ackedQueue.end(); itor++ )
+            itor->time += deltaTime;
+    }
+
+    fn UpdateQueues()
+    {
+        const float epsilon = 0.001f;
+
+        while ( sentQueue.size() && sentQueue.front().time > rtt_maximum + epsilon )
+            sentQueue.pop_front();
+
+        if ( receivedQueue.size() )
+        {
+            const uint32_t latest_sequence = receivedQueue.back().sequence;
+            const uint32_t minimum_sequence = latest_sequence >= 34 ? ( latest_sequence - 34 ) : max_sequence - ( 34 - latest_sequence );
+            while ( receivedQueue.size() && !sequence_more_recent( receivedQueue.front().sequence, minimum_sequence, max_sequence ) )
+                receivedQueue.pop_front();
+        }
+
+        while ( ackedQueue.size() && ackedQueue.front().time > rtt_maximum * 2 - epsilon )
+            ackedQueue.pop_front();
+
+        while ( pendingAckQueue.size() && pendingAckQueue.front().time > rtt_maximum + epsilon )
+        {
+            pendingAckQueue.pop_front();
+            lost_packets++;
+        }
+    }
+
+    fn UpdateStats()
+    {
+        let sent_bytes_per_second = 0;
+        for ( PacketQueue::iterator itor = sentQueue.begin(); itor != sentQueue.end(); ++itor )
+            sent_bytes_per_second += itor->size;
+        let acked_packets_per_second = 0;
+        let acked_bytes_per_second = 0;
+        for ( PacketQueue::iterator itor = ackedQueue.begin(); itor != ackedQueue.end(); ++itor )
+        {
+            if ( itor->time >= rtt_maximum )
+            {
+                acked_packets_per_second++;
+                acked_bytes_per_second += itor->size;
+            }
+        }
+        sent_bytes_per_second /= rtt_maximum;
+        acked_bytes_per_second /= rtt_maximum;
+        sent_bandwidth = sent_bytes_per_second * ( 8 / 1000.0f );
+        acked_bandwidth = acked_bytes_per_second * ( 8 / 1000.0f );
+    }
+}
+
 enum State {
     Disconnected,
     Listening,
@@ -88,26 +379,45 @@ enum State {
 }
 
 enum Mode {
+    Null,
     Client,
     Server,
 }
-struct ReliableConnection {
-    address: SocketAddrV4,
-    socket: UdpSocket,
 
-    protocolId: u32,
-    state: State,
-    mode: Mode,
-    running: bool,
-    timeout: f32,
+struct ReliableConnection {
+    address:            SocketAddrV4,
+    socket:             UdpSocket,
+
+    protocolId:         u32,
+    state:              State,
+    mode:               Mode,
+    running:            bool,
+    timeout:            f32,
     timeoutAccumulator: f32,
 
-    reliabilitySystem: ReliabilitySystem,
+    reliabilitySystem:  ReliabilitySystem,
+}
+
+impl Default for ReliableConnection {
+    fn default () -> ReliableConnection {
+        address: , 
+        socket: , 
+        protocolId: 0, 
+        state: State.Disconnected, 
+        mode: Null, 
+        running: false,
+        timeout: 0.0f32,
+        timeoutAccumulator: 0.0f32,
+
+        reliabilitySystem: 
+    }
 }
 
 impl ReliableConnection {
-    fn new(&self) -> ReliableConnection {
-
+    fn new(&self,pId: u32, TO: f32) -> ReliableConnection {
+        protocolId: pId,
+        timeout: TO,
+        ..Default::default()
     }
     fn start(&self, addr: SocketAddrV4)
     {
