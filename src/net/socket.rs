@@ -81,11 +81,11 @@ struct ReliabilitySystem {
 }
 
 impl ReliabilitySystem {
-    fn new(&self) -> ReliabilitySystem {
+    pub fn new(&self) -> ReliabilitySystem {
 
     }
 
-    fn reset(&self)
+    pub fn reset(&self)
     {
         self.local_sequence = 0;
         self.remote_sequence = 0;
@@ -400,16 +400,16 @@ struct ReliableConnection {
 
 impl Default for ReliableConnection {
     fn default () -> ReliableConnection {
-        address: , 
-        socket: , 
-        protocolId: 0, 
-        state: State.Disconnected, 
-        mode: Null, 
+        address: ,
+        socket: ,
+        protocolId: 0,
+        state: State.Disconnected,
+        mode: Null,
         running: false,
         timeout: 0.0f32,
         timeoutAccumulator: 0.0f32,
 
-        reliabilitySystem: 
+        reliabilitySystem:
     }
 }
 
@@ -496,7 +496,7 @@ impl ReliableConnection {
         self.mode
     }
 
-    fn update(&self, deltaTime: f32)
+    pub fn update(&self, deltaTime: f32)
     {
         assert!( self.running );
         self.timeoutAccumulator += deltaTime;
@@ -520,7 +520,7 @@ impl ReliableConnection {
         }
     }
     // 添加4字节的 协议ID 后发送
-    fn send_packet(&self, data: []u8, size: u32) -> bool
+    pub fn send_packet(&self, data: []u8, size: u32) -> bool
     {
         assert!( running );
         if ( address.GetAddress() == 0 )
@@ -537,9 +537,9 @@ impl ReliableConnection {
         return (socket.send_to(packet, &address)).unwrap();
     }
 
-    fn receive_packet(&self, data: []u8,  size: u32) -> i32
+    pub fn receive_packet(&self, data: []u8,  size: u32) -> i32
     {
-        assert!( running );
+        assert!(self.running);
         // uchar_t packet[size + 4];
         let packet = [u8, size + 4];
         SocketAddrV4 sender;
@@ -589,8 +589,8 @@ impl ReliableConnection {
     fn on_connect() {
 
     }
-    fn on_disconnect() {
-
+    fn on_disconnect(&self) {
+        self.clear_data();
     }
 
     fn clear_data(&self) {
