@@ -5,6 +5,7 @@ use std::default::Default;
 use std::net::UdpSocket;
 use std::collections::LinkedList;
 use std::vec;
+use std::vec::Vec;
 use std::ptr;
 
 struct PacketData {
@@ -14,7 +15,7 @@ struct PacketData {
 }
 
 impl Default for PacketData {
-    fn default() -> {
+    fn default() -> PacketData {
         PacketData{sequence: 0, time: 0.0f32, size: 0}
     }
 }
@@ -121,30 +122,33 @@ impl ReliabilitySystem {
         }
         assert!( !sentQueue.exists( local_sequence ) );
         assert!( !pendingAckQueue.exists( local_sequence ) );
-        let data = PacketData::new();
-        data.sequence = local_sequence;
-        data.time = 0.0f;
+        let data = PacketData::default();
+        data.sequence = self.local_sequence;
+        data.time = 0.0f32;
         data.size = size;
         sentQueue.push_back( data );
         pendingAckQueue.push_back( data );
-        sent_packets++;
-        local_sequence++;
-        if ( local_sequence > max_sequence )
+        sent_packets = sent_packets + 1;
+        local_sequence = sent_packets + 1;
+        if ( local_sequence > max_sequence ) {
             local_sequence = 0;
+        }
     }
 
     fn PacketReceived(&self, sequence: u32, size: u32 )
     {
-        recv_packets++;
-        if ( receivedQueue.exists( sequence ) )
+        recv_packets = recv_packets + 1;
+        if ( receivedQueue.exists( sequence ) ) {
             return;
-        PacketData data;
+        }
+        let data = PacketData::default();
         data.sequence = sequence;
-        data.time = 0.0f;
+        data.time = 0.0f32;
         data.size = size;
         receivedQueue.push_back( data );
-        if ( sequence_more_recent( sequence, remote_sequence, max_sequence ) )
+        if ( sequence_more_recent( sequence, remote_sequence, max_sequence ) ){
             remote_sequence = sequence;
+        }
     }
 
     fn GenerateAckBits() -> u32
@@ -178,7 +182,7 @@ impl ReliabilitySystem {
 
     // utility functions
 
-    fn sequence_more_recent( uint32_t s1, uint32_t s2, uint32_t max_sequence ) -> bool
+    fn sequence_more_recent(  s1: u32,  s2: u32,  max_sequence: u32 ) -> bool
     {
         return (( s1 > s2 ) && ( s1 - s2 <= max_sequence / 2 )) || (( s2 > s1 ) && ( s2 - s1 > max_sequence / 2 ));
     }
@@ -201,27 +205,30 @@ impl ReliabilitySystem {
         }
     }
 
-    fn generate_ack_bits( uint32_t ack: u32, received_queue: &PacketQueue , max_sequence: u32) -> u32
+    fn generate_ack_bits(  ack: u32, received_queue: &PacketQueue , max_sequence: u32) -> u32
     {
         let ack_bits = 0u32;
-        for ( PacketQueue::const_iterator itor = received_queue.begin(); itor != received_queue.end(); itor++ )
-        {
-            if ( itor->sequence == ack || sequence_more_recent( itor->sequence, ack, max_sequence ) )
+        for itor in received_queue.itor() {
+            if ( itor.sequence == ack || sequence_more_recent( itor.sequence, ack, max_sequence ) ){
                 break;
-            int bit_index = bit_index_for_sequence( itor->sequence, ack, max_sequence );
-            if ( bit_index <= 31 )
+            }
+            let bit_index = bit_index_for_sequence( itor.sequence, ack, max_sequence );
+            if ( bit_index <= 31 ) {
                 ack_bits |= 1 << bit_index;
+            }
         }
+
         return ack_bits;
     }
 
     fn process_ack(&self, ack: u32,  ack_bits: u32,
                              pending_ack_queue: &PacketQueue, acked_queue: &PacketQueue,
-                             std::vector<uint32_t> &acks, acked_packets: u32,
+                             acks: &Vec<u32>, acked_packets: u32,
                              rtt: &f32, max_sequence: u32 )
     {
-        if ( pending_ack_queue.empty() )
+        if ( pending_ack_queue.empty() ) {
             return;
+        }
 
         PacketQueue::iterator itor = pending_ack_queue.begin();
         while ( itor != pending_ack_queue.end() )
