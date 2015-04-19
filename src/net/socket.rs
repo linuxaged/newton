@@ -1,6 +1,7 @@
 #![feature(collections)]
 mod socket {
 
+use std::default::Default;
 use std::net::UdpSocket;
 use std::collections::LinkedList;
 use std::vec;
@@ -10,6 +11,12 @@ struct PacketData {
     sequence: u32,          // packet sequence number
     time:     f32,          // time offset since packet was sent or received (depending on context)
     size:     u32,          // packet size in bytes
+}
+
+impl Default for PacketData {
+    fn default() -> {
+        PacketData{sequence: 0, time: 0.0f32, size: 0}
+    }
 }
 
 trait PacketQueue {
@@ -105,15 +112,16 @@ impl ReliabilitySystem {
 
     fn PacketSent(&self, size: u32 )
     {
-        if ( self.sentQueue.exists( local_sequence ) )
+        if ( self.sentQueue.exists( self.local_sequence ) )
         {
-            println!( "local sequence {} exists", local_sequence );
-            for ( PacketQueue::iterator itor = sentQueue.begin(); itor != sentQueue.end(); ++itor )
-                println!( "{}", itor->sequence );
+            println!( "local sequence {} exists", self.local_sequence );
+            for itor in self.sentQueue.iter() {
+                println!(itor.sequence)
+            }
         }
         assert!( !sentQueue.exists( local_sequence ) );
         assert!( !pendingAckQueue.exists( local_sequence ) );
-        let data = PacketData::new{};
+        let data = PacketData::new();
         data.sequence = local_sequence;
         data.time = 0.0f;
         data.size = size;
