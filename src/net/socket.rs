@@ -411,29 +411,36 @@ struct ReliableConnection {
     timeout:            f32,
     timeoutAccumulator: f32,
 
-    reliabilitySystem:  ReliabilitySystem,
+    reliabilitySystem:  ReliabilitySystem::default(),
 }
 
 impl Default for ReliableConnection {
     fn default () -> ReliableConnection {
-        address: SocketAddrV4,
-        socket: UdpSocket,
-        protocolId: 0,
-        state: State.Disconnected,
-        mode: Null,
-        running: false,
-        timeout: 0.0f32,
-        timeoutAccumulator: 0.0f32,
 
-        reliabilitySystem: ReliabilitySystem
+        ReliableConnection {
+            address: SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234),
+            socket: try!(UdpSocket::bind(&address)),
+            protocolId: 0,
+            state: State.Disconnected,
+            mode: Null,
+            running: false,
+            timeout: 0.0f32,
+            timeoutAccumulator: 0.0f32,
+
+            reliabilitySystem: ReliabilitySystem
+        }
+
     }
 }
 
 impl ReliableConnection {
     fn new(&self,pId: u32, TO: f32) -> ReliableConnection {
-        protocolId: pId,
-        timeout: TO,
-        ..Default::default()
+        ReliableConnection {
+            protocolId: pId,
+            timeout: TO,
+            ..Default::default()
+        }
+
     }
     fn start(&self, addr: SocketAddrV4)
     {
@@ -454,8 +461,9 @@ impl ReliableConnection {
         clear_data();
         drop(socket);
         self.running = false;
-        if ( self.connected )
+        if ( self.connected ) {
             on_disconnect();
+        }
         on_stop();
     }
 
@@ -469,8 +477,9 @@ impl ReliableConnection {
         printf( "server listening for connection\n" );
         self.connected = is_connected();
         clear_data();
-        if ( connected )
+        if ( connected ) {
             OnDisconnect();
+        }
         mode = Server;
         state = Listening;
     }
@@ -480,8 +489,9 @@ impl ReliableConnection {
         printf( "client connecting to {}", addr);
         self.connected = is_connected();
         clear_data();
-        if ( self.connected )
+        if ( self.connected ) {
             on_disconnect();
+        }
         self.mode = Mode.Client;
         self.state = State.Connecting;
         self.address = addr;
@@ -529,18 +539,20 @@ impl ReliableConnection {
             {
                 println!( "connection timed out\n" );
                 clear_data();
-                if ( self.state == State.Connecting )
+                if ( self.state == State.Connecting ) {
                     self.state = State.ConnectFail;
+                }
                 on_disconnect();
             }
         }
     }
     // 添加4字节的 协议ID 后发送
-    pub fn send_packet(&self, data: []u8, size: u32) -> bool
+    pub fn send_packet(&self, data: &[u8], size: u32) -> bool
     {
         assert!( running );
-        if ( address.GetAddress() == 0 )
+        if ( address.GetAddress() == 0 ) {
             return false;
+        }
         // uchar_t packet[size + 4];
         let packet = [u8, size + 4];
         packet[0] = ( protocolId >> 24 ) as u8 ;
@@ -553,22 +565,25 @@ impl ReliableConnection {
         return (socket.send_to(packet, &address)).unwrap();
     }
 
-    pub fn receive_packet(&self, data: []u8,  size: u32) -> i32
+    pub fn receive_packet(&self, data: &[u8],  size: u32) -> i32
     {
         assert!(self.running);
         // uchar_t packet[size + 4];
         let packet = [u8, size + 4];
-        SocketAddrV4 sender;
         let (bytes_read, sender) = socket.recv_from(&packet);
-        if ( bytes_read == 0 )
+        if ( bytes_read == 0 ) {
             return 0;
-        if ( bytes_read <= 4 )
+        }
+        if ( bytes_read <= 4 ) {
             return 0;
+        }
         if ( packet[0] != ( protocolId >> 24 ) as u8 ||
                 packet[1] != ( ( protocolId >> 16 ) & 0xFF ) as u8 ||
                 packet[2] != ( ( protocolId >> 8 ) & 0xFF ) as u8||
-                packet[3] != ( protocolId & 0xFF ) as u8)
+                packet[3] != ( protocolId & 0xFF ) as u8) {
             return 0;
+        }
+
         if ( self.mode == Mode.Server && !is_connected )
         {
             println!( "server accepts connection from client {}", sender);
@@ -584,7 +599,7 @@ impl ReliableConnection {
                 self.state = Connected;
                 on_connect();
             }
-            self.timeoutAccumulator = 0.0f;
+            self.timeoutAccumulator = 0.0f32;
 
             //memcpy( data, &packet[4], bytes_read - 4 );
             ptr::copy_nonoverlapping(packet, data, bytes_read - 4);
