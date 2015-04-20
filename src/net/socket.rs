@@ -230,33 +230,31 @@ impl ReliabilitySystem {
             return;
         }
 
-        PacketQueue::iterator itor = pending_ack_queue.begin();
-        while ( itor != pending_ack_queue.end() )
+        for itor in self.pending_ack_queue.itor()
         {
-            bool acked = false;
+            let acked = false;
 
-            if ( itor->sequence == ack )
+            if ( itor.sequence == ack )
             {
                 acked = true;
             }
-            else if ( !sequence_more_recent( itor->sequence, ack, max_sequence ) )
+            else if ( !sequence_more_recent( itor.sequence, ack, max_sequence ) )
             {
-                int bit_index = bit_index_for_sequence( itor->sequence, ack, max_sequence );
-                if ( bit_index <= 31 )
+                let bit_index = bit_index_for_sequence( itor.sequence, ack, max_sequence );
+                if ( bit_index <= 31 ) {
                     acked = ( ack_bits >> bit_index ) & 1;
+                }
             }
 
             if ( acked )
             {
-                rtt += ( itor->time - rtt ) * 0.1f;
+                rtt += ( itor.time - rtt ) * 0.1f;
 
                 acked_queue.insert_sorted( *itor, max_sequence );
-                acks.push_back( itor->sequence );
-                acked_packets++;
+                acks.push_back( itor.sequence );
+                acked_packets = acked_packets + 1;
                 itor = pending_ack_queue.erase( itor );
             }
-            else
-                ++itor;
         }
     }
 
