@@ -248,7 +248,7 @@ impl ReliabilitySystem {
 
             if ( acked )
             {
-                rtt += ( itor.time - rtt ) * 0.1f;
+                rtt += ( itor.time - rtt ) * 0.1f32;
 
                 acked_queue.insert_sorted( *itor, max_sequence );
                 acks.push_back( itor.sequence );
@@ -273,12 +273,6 @@ impl ReliabilitySystem {
     fn GetMaxSequence(&self) -> u32
     {
         self.max_sequence
-    }
-
-    fn GetAcks( uint32_t **ACKs, uint32_t &ack_count )
-    {
-        *ACKs = &this->acks[0];
-        ack_count = static_cast<uint32_t>(this->acks.size());
     }
 
     fn GetSentPackets() -> u32
@@ -321,65 +315,74 @@ impl ReliabilitySystem {
         12
     }
 
-    fn AdvanceQueueTime( deltaTime: f32 )
+    fn AdvanceQueueTime(&self, deltaTime: f32 )
     {
-        for ( PacketQueue::iterator itor = sentQueue.begin(); itor != sentQueue.end(); itor++ )
-            itor->time += deltaTime;
+        for itor in self.sentQueue.itor() {
+            itor.time += deltaTime;
+        }
 
-        for ( PacketQueue::iterator itor = receivedQueue.begin(); itor != receivedQueue.end(); itor++ )
-            itor->time += deltaTime;
+        for itor in self.receivedQueue.itor() {
+            itor.time += deltaTime;
+        }
 
-        for ( PacketQueue::iterator itor = pendingAckQueue.begin(); itor != pendingAckQueue.end(); itor++ )
-            itor->time += deltaTime;
+        for itor in self.pendingAckQueue.itor() {
+            itor.time += deltaTime;
+        }
 
-        for ( PacketQueue::iterator itor = ackedQueue.begin(); itor != ackedQueue.end(); itor++ )
-            itor->time += deltaTime;
+        for itor in self.ackedQueue.itor() {
+            itor.time += deltaTime;
+        }
     }
 
     fn UpdateQueues()
     {
-        const float epsilon = 0.001f;
+        let epsilon = 0.001f32;
 
-        while ( sentQueue.size() && sentQueue.front().time > rtt_maximum + epsilon )
+        while ( sentQueue.size() && sentQueue.front().unwrap().time > rtt_maximum + epsilon ) {
             sentQueue.pop_front();
+        }
 
         if ( receivedQueue.size() )
         {
-            const uint32_t latest_sequence = receivedQueue.back().sequence;
-            const uint32_t minimum_sequence = latest_sequence >= 34 ? ( latest_sequence - 34 ) : max_sequence - ( 34 - latest_sequence );
-            while ( receivedQueue.size() && !sequence_more_recent( receivedQueue.front().sequence, minimum_sequence, max_sequence ) )
+            let latest_sequence = receivedQueue.back().unwrap().sequence;
+            let minimum_sequence = if latest_sequence >= 34 { latest_sequence - 34 } else { max_sequence - ( 34 - latest_sequence) };
+            // let minimum_sequence = latest_sequence >= 34 ? ( latest_sequence - 34 ) : max_sequence - ( 34 - latest_sequence );
+            while ( receivedQueue.size() && !sequence_more_recent( receivedQueue.front().unwrap().sequence, minimum_sequence, max_sequence ) ) {
                 receivedQueue.pop_front();
+            }
         }
 
-        while ( ackedQueue.size() && ackedQueue.front().time > rtt_maximum * 2 - epsilon )
+        while ( ackedQueue.size() && ackedQueue.front().unwrap().time > rtt_maximum * 2 - epsilon ) {
             ackedQueue.pop_front();
+        }
 
-        while ( pendingAckQueue.size() && pendingAckQueue.front().time > rtt_maximum + epsilon )
+        while ( pendingAckQueue.size() && pendingAckQueue.front().unwrap().time > rtt_maximum + epsilon )
         {
             pendingAckQueue.pop_front();
-            lost_packets++;
+            lost_packets += 1;
         }
     }
 
     fn UpdateStats()
     {
         let sent_bytes_per_second = 0;
-        for ( PacketQueue::iterator itor = sentQueue.begin(); itor != sentQueue.end(); ++itor )
-            sent_bytes_per_second += itor->size;
+        for itor in sentQueue.itor() {
+            sent_bytes_per_second += itor.size;
+        }
         let acked_packets_per_second = 0;
         let acked_bytes_per_second = 0;
-        for ( PacketQueue::iterator itor = ackedQueue.begin(); itor != ackedQueue.end(); ++itor )
+        for itor in ackedQueue.itor()
         {
-            if ( itor->time >= rtt_maximum )
+            if ( itor.time >= rtt_maximum )
             {
-                acked_packets_per_second++;
-                acked_bytes_per_second += itor->size;
+                acked_packets_per_second += 1;
+                acked_bytes_per_second += itor.size;
             }
         }
         sent_bytes_per_second /= rtt_maximum;
         acked_bytes_per_second /= rtt_maximum;
-        sent_bandwidth = sent_bytes_per_second * ( 8 / 1000.0f );
-        acked_bandwidth = acked_bytes_per_second * ( 8 / 1000.0f );
+        sent_bandwidth = sent_bytes_per_second * ( 8 / 1000.0f32 );
+        acked_bandwidth = acked_bytes_per_second * ( 8 / 1000.0f32 );
     }
 }
 
@@ -413,8 +416,8 @@ struct ReliableConnection {
 
 impl Default for ReliableConnection {
     fn default () -> ReliableConnection {
-        address: ,
-        socket: ,
+        address: SocketAddrV4,
+        socket: UdpSocket,
         protocolId: 0,
         state: State.Disconnected,
         mode: Null,
@@ -422,7 +425,7 @@ impl Default for ReliableConnection {
         timeout: 0.0f32,
         timeoutAccumulator: 0.0f32,
 
-        reliabilitySystem:
+        reliabilitySystem: ReliabilitySystem
     }
 }
 
