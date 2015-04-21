@@ -554,7 +554,7 @@ impl ReliableConnection {
             return false;
         }
         // uchar_t packet[size + 4];
-        let mut packet = [0u8; size + 4];
+        let mut packet: Vec<u8> = Vec::with_capacity(size + 4);
         packet[0] = ( self.protocolId >> 24 ) as u8 ;
         packet[1] = ( ( self.protocolId >> 16 ) & 0xFF ) as u8;
         packet[2] = ( ( self.protocolId >> 8 ) & 0xFF ) as u8;
@@ -569,7 +569,7 @@ impl ReliableConnection {
     {
         assert!(self.running);
         // uchar_t packet[size + 4];
-        let mut packet = [0u8; size + 4];
+        let mut packet: Vec<u8> = Vec::with_capacity(size + 4);
         let (bytes_read, sender) = self.socket.recv_from(&mut packet);
         if ( bytes_read == 0 ) {
             return 0;
