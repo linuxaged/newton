@@ -153,12 +153,12 @@ impl ReliabilitySystem {
 
     fn GenerateAckBits(&self) -> u32
     {
-        return self.generate_ack_bits( self.GetRemoteSequence(), self.receivedQueue, self.max_sequence );
+        return self.generate_ack_bits( self.GetRemoteSequence(), &self.receivedQueue, self.max_sequence );
     }
 
     fn ProcessAck(&self, ack: u32, ack_bits: u32 )
     {
-        self.process_ack( ack, ack_bits, self.pendingAckQueue, self.ackedQueue, self.acks, self.acked_packets, self.rtt, self.max_sequence );
+        self.process_ack( ack, ack_bits, &self.pendingAckQueue, &self.ackedQueue, &self.acks, self.acked_packets, &mut self.rtt, self.max_sequence );
     }
 
     fn Update(&self, deltaTime: f32 )
@@ -187,7 +187,7 @@ impl ReliabilitySystem {
         return (( s1 > s2 ) && ( s1 - s2 <= max_sequence / 2 )) || (( s2 > s1 ) && ( s2 - s1 > max_sequence / 2 ));
     }
 
-    fn bit_index_for_sequence( sequence: u32,  ack: u32, max_sequence: u32 ) -> i32
+    fn bit_index_for_sequence( sequence: u32,  ack: u32, max_sequence: u32 ) -> u32
     {
         assert!( sequence != ack );
         assert!( !sequence_more_recent( sequence, ack, max_sequence ) );
@@ -205,7 +205,7 @@ impl ReliabilitySystem {
         }
     }
 
-    fn generate_ack_bits(&self, ack: u32, received_queue: &PacketQueue , max_sequence: u32) -> u32
+    fn generate_ack_bits(&self, ack: u32, received_queue: &LinkedList<PacketData> , max_sequence: u32) -> u32
     {
         let ack_bits = 0u32;
         for itor in received_queue.itor() {
@@ -222,9 +222,9 @@ impl ReliabilitySystem {
     }
 
     fn process_ack(&self, ack: u32,  ack_bits: u32,
-                             pending_ack_queue: &PacketQueue, acked_queue: &PacketQueue,
+                             pending_ack_queue: &LinkedList<PacketData>, acked_queue: &LinkedList<PacketData>,
                              acks: &Vec<u32>, acked_packets: u32,
-                             rtt: &f32, max_sequence: u32 )
+                             rtt: &mut f32, max_sequence: u32 )
     {
         if ( pending_ack_queue.empty() ) {
             return;
@@ -379,8 +379,8 @@ impl ReliabilitySystem {
                 acked_bytes_per_second += itor.size;
             }
         }
-        sent_bytes_per_second /= self.rtt_maximum;
-        acked_bytes_per_second /= self.rtt_maximum;
+        sent_bytes_per_second /= sent_bytes_per_second / self.rtt_maximum;
+        acked_bytes_per_second /= acked_bytes_per_second / self.rtt_maximum;
         self.sent_bandwidth = sent_bytes_per_second * ( 8 / 1000.0f32 );
         self.acked_bandwidth = acked_bytes_per_second * ( 8 / 1000.0f32 );
     }
@@ -411,7 +411,7 @@ pub struct ReliableConnection {
     timeout:            f32,
     timeoutAccumulator: f32,
 
-    reliabilitySystem:  ReliabilitySystem::default(),
+    reliabilitySystem:  ReliabilitySystem,
 }
 
 impl Default for ReliableConnection {
@@ -419,7 +419,7 @@ impl Default for ReliableConnection {
 
         ReliableConnection {
             address: SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234),
-            socket: try!(UdpSocket::bind(address)),
+            socket: try!(UdpSocket::bind(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234))),
             protocolId: 0,
             state: State::Disconnected,
             mode: Mode::Null,
@@ -427,7 +427,7 @@ impl Default for ReliableConnection {
             timeout: 0.0f32,
             timeoutAccumulator: 0.0f32,
 
-            reliabilitySystem: ReliabilitySystem
+            reliabilitySystem: Default::default()
         }
 
     }
@@ -562,7 +562,7 @@ impl ReliableConnection {
 
         // memcpy( &packet[4], data, size );
         ptr::copy_nonoverlapping(packet, data, size);
-        return (self.socket.send_to(packet, &address)).unwrap();
+        return (self.socket.send_to(packet, &self.address)).unwrap();
     }
 
     pub fn receive_packet(&self, data: &[u8],  size: u32) -> i32
@@ -584,7 +584,7 @@ impl ReliableConnection {
             return 0;
         }
 
-        if ( self.mode == Mode::Server && !is_connected )
+        if ( self.mode == Mode::Server && !self.is_connected )
         {
             println!( "server accepts connection from client {}", sender);
             self.state = State::Connected;
@@ -627,7 +627,7 @@ impl ReliableConnection {
     fn clear_data(&self) {
         self.state = State::Disconnected;
         self.timeoutAccumulator = 0.0f32;
-        self.address = Address();
+        self.address = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234);
     }
 }
 
