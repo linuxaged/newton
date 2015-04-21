@@ -65,7 +65,7 @@ impl PacketQueue for LinkedList<PacketData> {
 }
 
 #[derive(Default)]
-struct ReliabilitySystem {
+pub struct ReliabilitySystem {
     max_sequence:    u32,                    // maximum sequence value before wrap around (used to test sequence wrap at low # values)
     local_sequence:  u32,                    // local sequence number for most recently sent packet
     remote_sequence: u32,                    // remote sequence number for most recently received packet
@@ -400,7 +400,7 @@ pub enum Mode {
     Server,
 }
 
-struct ReliableConnection {
+pub struct ReliableConnection {
     address:            SocketAddrV4,
     socket:             UdpSocket,
 
@@ -421,8 +421,8 @@ impl Default for ReliableConnection {
             address: SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234),
             socket: try!(UdpSocket::bind(address)),
             protocolId: 0,
-            state: State.Disconnected,
-            mode: Null,
+            state: State::Disconnected,
+            mode: Mode::Null,
             running: false,
             timeout: 0.0f32,
             timeoutAccumulator: 0.0f32,
@@ -445,7 +445,7 @@ impl ReliableConnection {
     fn start(&self, addr: SocketAddrV4)
     {
         assert!( !self.running );
-        println!( "start connection on port {}", port );
+        println!( "start connection on addr {}", addr );
         // if ( !socket.bind( addr ) )
         //     return false;
         self.running = true;
@@ -480,8 +480,8 @@ impl ReliableConnection {
         if ( self.connected ) {
             self.on_disconnect();
         }
-        self.mode = Mode.Server;
-        self.state = State.Listening;
+        self.mode = Mode::Server;
+        self.state = State::Listening;
     }
 
     fn connect(&self, addr: SocketAddrV4)
@@ -492,29 +492,29 @@ impl ReliableConnection {
         if ( self.connected ) {
             self.on_disconnect();
         }
-        self.mode = Mode.Client;
-        self.state = State.Connecting;
+        self.mode = Mode::Client;
+        self.state = State::Connecting;
         self.address = addr;
     }
 
     fn is_connecting(&self) -> bool
     {
-        self.state == State.Connecting
+        self.state == State::Connecting
     }
 
     fn connect_failed(&self) -> bool
     {
-        self.state == State.ConnectFail
+        self.state == State::ConnectFail
     }
 
     fn is_connected(&self) -> bool
     {
-        self.state == State.Connected
+        self.state == State::Connected
     }
 
     fn is_listening(&self) -> bool
     {
-        self.state == State.Listening
+        self.state == State::Listening
     }
 
     fn get_mode(&self) -> Mode
@@ -528,19 +528,19 @@ impl ReliableConnection {
         self.timeoutAccumulator += deltaTime;
         if ( self.timeoutAccumulator > self.timeout )
         {
-            if ( self.state == State.Connecting )
+            if ( self.state == State::Connecting )
             {
                 println!( "connect timed out\n" );
                 self.clear_data();
-                self.state = State.ConnectFail;
+                self.state = State::ConnectFail;
                 self.on_disconnect();
             }
-            else if ( self.state == State.Connected )
+            else if ( self.state == State::Connected )
             {
                 println!( "connection timed out\n" );
                 self.clear_data();
-                if ( self.state == State.Connecting ) {
-                    self.state = State.ConnectFail;
+                if ( self.state == State::Connecting ) {
+                    self.state = State::ConnectFail;
                 }
                 self.on_disconnect();
             }
@@ -550,11 +550,11 @@ impl ReliableConnection {
     pub fn send_packet(&self, data: &[u8], size: u32) -> bool
     {
         assert!( self.running );
-        if ( address.GetAddress() == 0 ) {
+        if ( self.address.GetAddress() == 0 ) {
             return false;
         }
         // uchar_t packet[size + 4];
-        let packet = [u8, size + 4];
+        let packet = [0u8, size + 4];
         packet[0] = ( self.protocolId >> 24 ) as u8 ;
         packet[1] = ( ( self.protocolId >> 16 ) & 0xFF ) as u8;
         packet[2] = ( ( self.protocolId >> 8 ) & 0xFF ) as u8;
@@ -569,7 +569,7 @@ impl ReliableConnection {
     {
         assert!(self.running);
         // uchar_t packet[size + 4];
-        let packet = [u8, size + 4];
+        let packet = [0u8, size + 4];
         let (bytes_read, sender) = self.socket.recv_from(&packet);
         if ( bytes_read == 0 ) {
             return 0;
@@ -584,20 +584,20 @@ impl ReliableConnection {
             return 0;
         }
 
-        if ( self.mode == Mode.Server && !is_connected )
+        if ( self.mode == Mode::Server && !is_connected )
         {
             println!( "server accepts connection from client {}", sender);
-            self.state = State.Connected;
+            self.state = State::Connected;
             self.address = sender;
-            on_connect();
+            self.on_connect();
         }
-        if ( sender == address )
+        if ( sender == self.address )
         {
-            if ( mode == Mode.Client && state == State.Connecting )
+            if ( self.mode == Mode::Client && self.state == State::Connecting )
             {
                 println!("client completes connection with server");
-                self.state = Connected;
-                on_connect();
+                self.state = State::Connected;
+                self.on_connect();
             }
             self.timeoutAccumulator = 0.0f32;
 
@@ -625,7 +625,7 @@ impl ReliableConnection {
     }
 
     fn clear_data(&self) {
-        self.state = State.Disconnected;
+        self.state = State::Disconnected;
         self.timeoutAccumulator = 0.0f32;
         self.address = Address();
     }
