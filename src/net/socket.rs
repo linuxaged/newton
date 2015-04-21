@@ -208,7 +208,7 @@ impl ReliabilitySystem {
     fn generate_ack_bits(&self, ack: u32, received_queue: &LinkedList<PacketData> , max_sequence: u32) -> u32
     {
         let ack_bits = 0u32;
-        for itor in received_queue.itor() {
+        for itor in received_queue.iter() {
             if ( itor.sequence == ack || sequence_more_recent( itor.sequence, ack, max_sequence ) ){
                 break;
             }
@@ -230,7 +230,7 @@ impl ReliabilitySystem {
             return;
         }
 
-        for itor in self.pending_ack_queue.itor()
+        for itor in self.pending_ack_queue.iter()
         {
             let acked = false;
 
@@ -251,9 +251,9 @@ impl ReliabilitySystem {
                 rtt += ( itor.time - rtt ) * 0.1f32;
 
                 acked_queue.insert_sorted( *itor, max_sequence );
-                acks.push_back( itor.sequence );
+                acks.push( itor.sequence );
                 acked_packets = acked_packets + 1;
-                itor = pending_ack_queue.erase( itor );
+                itor = *pending_ack_queue.erase( itor );
             }
         }
     }
@@ -317,19 +317,19 @@ impl ReliabilitySystem {
 
     fn AdvanceQueueTime(&self, deltaTime: f32 )
     {
-        for itor in self.sentQueue.itor() {
+        for itor in self.sentQueue.iter() {
             itor.time += deltaTime;
         }
 
-        for itor in self.receivedQueue.itor() {
+        for itor in self.receivedQueue.iter() {
             itor.time += deltaTime;
         }
 
-        for itor in self.pendingAckQueue.itor() {
+        for itor in self.pendingAckQueue.iter() {
             itor.time += deltaTime;
         }
 
-        for itor in self.ackedQueue.itor() {
+        for itor in self.ackedQueue.iter() {
             itor.time += deltaTime;
         }
     }
@@ -366,12 +366,12 @@ impl ReliabilitySystem {
     fn UpdateStats(&self)
     {
         let sent_bytes_per_second = 0;
-        for itor in self.sentQueue.itor() {
+        for itor in self.sentQueue.iter() {
             sent_bytes_per_second += itor.size;
         }
         let acked_packets_per_second = 0;
         let acked_bytes_per_second = 0;
-        for itor in self.ackedQueue.itor()
+        for itor in self.ackedQueue.iter()
         {
             if ( itor.time >= self.rtt_maximum )
             {
@@ -385,7 +385,7 @@ impl ReliabilitySystem {
         self.acked_bandwidth = acked_bytes_per_second * ( 8 / 1000.0f32 );
     }
 }
-
+#[derive(PartialEq)]
 pub enum State {
     Disconnected,
     Listening,
@@ -393,7 +393,7 @@ pub enum State {
     ConnectFail,
     Connected,
 }
-
+#[derive(PartialEq)]
 pub enum Mode {
     Null,
     Client,
@@ -419,7 +419,7 @@ impl Default for ReliableConnection {
 
         ReliableConnection {
             address: SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234),
-            socket: try!(UdpSocket::bind(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234))),
+            socket: try!(UdpSocket::bind(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234))).unwrap(),
             protocolId: 0,
             state: State::Disconnected,
             mode: Mode::Null,
@@ -442,7 +442,7 @@ impl ReliableConnection {
         }
 
     }
-    fn start(&self, addr: SocketAddrV4)
+    fn start(&self, addr: SocketAddrV4) -> bool
     {
         assert!( !self.running );
         println!( "start connection on addr {}", addr );
@@ -547,21 +547,21 @@ impl ReliableConnection {
         }
     }
     // 添加4字节的 协议ID 后发送
-    pub fn send_packet(&self, data: &[u8], size: u32) -> bool
+    pub fn send_packet(&self, data: &mut [u8], size: u32) -> bool
     {
         assert!( self.running );
         if ( self.address.GetAddress() == 0 ) {
             return false;
         }
         // uchar_t packet[size + 4];
-        let packet = [0u8, size + 4];
+        let mut packet = [0u8; size + 4];
         packet[0] = ( self.protocolId >> 24 ) as u8 ;
         packet[1] = ( ( self.protocolId >> 16 ) & 0xFF ) as u8;
         packet[2] = ( ( self.protocolId >> 8 ) & 0xFF ) as u8;
         packet[3] = ( ( self.protocolId ) & 0xFF ) as u8;
 
         // memcpy( &packet[4], data, size );
-        ptr::copy_nonoverlapping(packet, data, size);
+        ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[4], size);
         return (self.socket.send_to(packet, &self.address)).unwrap();
     }
 
@@ -569,8 +569,8 @@ impl ReliableConnection {
     {
         assert!(self.running);
         // uchar_t packet[size + 4];
-        let packet = [0u8, size + 4];
-        let (bytes_read, sender) = self.socket.recv_from(&packet);
+        let mut packet = [0u8; size + 4];
+        let (bytes_read, sender) = self.socket.recv_from(&mut packet);
         if ( bytes_read == 0 ) {
             return 0;
         }
@@ -584,7 +584,7 @@ impl ReliableConnection {
             return 0;
         }
 
-        if ( self.mode == Mode::Server && !self.is_connected )
+        if ( (self.mode == Mode::Server) && !self.is_connected )
         {
             println!( "server accepts connection from client {}", sender);
             self.state = State::Connected;
@@ -593,7 +593,7 @@ impl ReliableConnection {
         }
         if ( sender == self.address )
         {
-            if ( self.mode == Mode::Client && self.state == State::Connecting )
+            if ( (self.mode == Mode::Client) && (self.state == State::Connecting) )
             {
                 println!("client completes connection with server");
                 self.state = State::Connected;
@@ -602,7 +602,7 @@ impl ReliableConnection {
             self.timeoutAccumulator = 0.0f32;
 
             //memcpy( data, &packet[4], bytes_read - 4 );
-            ptr::copy_nonoverlapping(packet, data, bytes_read - 4);
+            ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[4], bytes_read - 4);
         }
         return 0;
     }
