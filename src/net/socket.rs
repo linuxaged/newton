@@ -6,7 +6,7 @@ mod socket {
 
 use std::default::Default;
 use std::net::{UdpSocket, SocketAddrV4, Ipv4Addr};
-use std::collections::LinkedList;
+use std::collections::VecDeque;
 use std::vec;
 use std::vec::Vec;
 use std::ptr;
@@ -51,7 +51,7 @@ fn bit_index_for_sequence( sequence: u32,  ack: u32, max_sequence: u32 ) -> u32
     }
 }
 
-impl PacketQueue for LinkedList<PacketData> {
+impl PacketQueue for VecDeque<PacketData> {
     fn exists(&self, mut sequence: u32) -> bool {
         for iter in self.iter() {
             if iter.sequence == sequence {
@@ -75,6 +75,7 @@ impl PacketQueue for LinkedList<PacketData> {
             else {
                 let mut itor = self.iter_mut();
                 loop {
+                    // use iter find
                     if ( sequence_more_recent( itor.next().unwrap().sequence, p.sequence, max_sequence ) ) {
                         itor.insert_next(p);
                         break;
@@ -103,10 +104,10 @@ pub struct ReliabilitySystem {
 
     acks:            Vec<u32>,               // acked packets from last set of packet receives. cleared each update!
 
-    sentQueue:       LinkedList<PacketData>, // sent packets used to calculate sent bandwidth (kept until rtt_maximum)
-    pendingAckQueue: LinkedList<PacketData>, // sent packets which have not been acked yet (kept until rtt_maximum * 2 )
-    receivedQueue:   LinkedList<PacketData>, // received packets for determining acks to send (kept up to most recent recv sequence - 32)
-    ackedQueue:      LinkedList<PacketData>, // acked packets (kept until rtt_maximum * 2)
+    sentQueue:       VecDeque<PacketData>, // sent packets used to calculate sent bandwidth (kept until rtt_maximum)
+    pendingAckQueue: VecDeque<PacketData>, // sent packets which have not been acked yet (kept until rtt_maximum * 2 )
+    receivedQueue:   VecDeque<PacketData>, // received packets for determining acks to send (kept up to most recent recv sequence - 32)
+    ackedQueue:      VecDeque<PacketData>, // acked packets (kept until rtt_maximum * 2)
 }
 
 impl ReliabilitySystem {
