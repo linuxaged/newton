@@ -30,6 +30,24 @@ fn sequence_more_recent(s1: u32, s2: u32, max_sequence: u32) -> bool {
     (( s1 > s2 ) && ( s1 - s2 <= max_sequence / 2 )) || (( s2 > s1 ) && ( s2 - s1 > max_sequence / 2 ))
 }
 
+fn bit_index_for_sequence( sequence: u32,  ack: u32, max_sequence: u32 ) -> u32
+{
+    assert!( sequence != ack );
+    assert!( !sequence_more_recent( sequence, ack, max_sequence ) );
+    if ( sequence > ack )
+    {
+        assert!( ack < 33 );
+        assert!( max_sequence >= sequence );
+        return ack + ( max_sequence - sequence );
+    }
+    else
+    {
+        assert!( ack >= 1 );
+        assert!( sequence <= ack - 1 );
+        return ack - 1 - sequence;
+    }
+}
+
 impl PacketQueue for LinkedList<PacketData> {
     fn exists(&self, mut sequence: u32) -> bool {
         for iter in self.iter() {
@@ -187,23 +205,7 @@ impl ReliabilitySystem {
         return (( s1 > s2 ) && ( s1 - s2 <= max_sequence / 2 )) || (( s2 > s1 ) && ( s2 - s1 > max_sequence / 2 ));
     }
 
-    fn bit_index_for_sequence( sequence: u32,  ack: u32, max_sequence: u32 ) -> u32
-    {
-        assert!( sequence != ack );
-        assert!( !sequence_more_recent( sequence, ack, max_sequence ) );
-        if ( sequence > ack )
-        {
-            assert!( ack < 33 );
-            assert!( max_sequence >= sequence );
-            return ack + ( max_sequence - sequence );
-        }
-        else
-        {
-            assert!( ack >= 1 );
-            assert!( sequence <= ack - 1 );
-            return ack - 1 - sequence;
-        }
-    }
+    
 
     fn generate_ack_bits(&self, ack: u32, received_queue: &LinkedList<PacketData> , max_sequence: u32) -> u32
     {
@@ -212,7 +214,7 @@ impl ReliabilitySystem {
             if ( itor.sequence == ack || sequence_more_recent( itor.sequence, ack, max_sequence ) ){
                 break;
             }
-            let bit_index = self.bit_index_for_sequence( itor.sequence, ack, max_sequence );
+            let bit_index = bit_index_for_sequence( itor.sequence, ack, max_sequence );
             if ( bit_index <= 31 ) {
                 ack_bits |= 1 << bit_index;
             }
@@ -226,11 +228,11 @@ impl ReliabilitySystem {
                              acks: &Vec<u32>, acked_packets: u32,
                              rtt: &mut f32, max_sequence: u32 )
     {
-        if ( pending_ack_queue.empty() ) {
+        if ( pending_ack_queue.is_empty() ) {
             return;
         }
 
-        for itor in self.pending_ack_queue.iter()
+        for itor in pending_ack_queue.iter()
         {
             let acked = false;
 
@@ -240,15 +242,15 @@ impl ReliabilitySystem {
             }
             else if ( !sequence_more_recent( itor.sequence, ack, max_sequence ) )
             {
-                let bit_index = self.bit_index_for_sequence( itor.sequence, ack, max_sequence );
+                let bit_index = bit_index_for_sequence( itor.sequence, ack, max_sequence );
                 if ( bit_index <= 31 ) {
-                    acked = ( ack_bits >> bit_index ) & 1;
+                    acked = (( ack_bits >> bit_index ) & 1) != 0;
                 }
             }
 
             if ( acked )
             {
-                rtt += ( itor.time - rtt ) * 0.1f32;
+                *rtt += ( itor.time - *rtt ) * 0.1f32;
 
                 acked_queue.insert_sorted( *itor, max_sequence );
                 acks.push( itor.sequence );
@@ -338,25 +340,25 @@ impl ReliabilitySystem {
     {
         let epsilon = 0.001f32;
 
-        while ( self.sentQueue.size() && self.sentQueue.front().unwrap().time > self.rtt_maximum + epsilon ) {
+        while ( (self.sentQueue.len() > 0) && self.sentQueue.front().unwrap().time > self.rtt_maximum + epsilon ) {
             self.sentQueue.pop_front();
         }
 
-        if ( self.receivedQueue.size() )
+        if ( self.receivedQueue.len() > 0 )
         {
             let latest_sequence = self.receivedQueue.back().unwrap().sequence;
             let minimum_sequence = if latest_sequence >= 34 { latest_sequence - 34 } else { self.max_sequence - ( 34 - latest_sequence) };
             // let minimum_sequence = latest_sequence >= 34 ? ( latest_sequence - 34 ) : max_sequence - ( 34 - latest_sequence );
-            while ( self.receivedQueue.size() && !sequence_more_recent( self.receivedQueue.front().unwrap().sequence, minimum_sequence, self.max_sequence ) ) {
+            while ( (self.receivedQueue.len() > 0) && !sequence_more_recent( self.receivedQueue.front().unwrap().sequence, minimum_sequence, self.max_sequence ) ) {
                 self.receivedQueue.pop_front();
             }
         }
 
-        while ( self.ackedQueue.size() && self.ackedQueue.front().unwrap().time > self.rtt_maximum * 2 - epsilon ) {
+        while ( (self.ackedQueue.len() > 0) && self.ackedQueue.front().unwrap().time > self.rtt_maximum * 2 - epsilon ) {
             self.ackedQueue.pop_front();
         }
 
-        while ( self.pendingAckQueue.size() && self.pendingAckQueue.front().unwrap().time > self.rtt_maximum + epsilon )
+        while ( (self.pendingAckQueue.len() > 0) && self.pendingAckQueue.front().unwrap().time > self.rtt_maximum + epsilon )
         {
             self.pendingAckQueue.pop_front();
             self.lost_packets += 1;
@@ -379,10 +381,10 @@ impl ReliabilitySystem {
                 acked_bytes_per_second += itor.size;
             }
         }
-        sent_bytes_per_second /= sent_bytes_per_second / self.rtt_maximum;
-        acked_bytes_per_second /= acked_bytes_per_second / self.rtt_maximum;
-        self.sent_bandwidth = sent_bytes_per_second * ( 8 / 1000.0f32 );
-        self.acked_bandwidth = acked_bytes_per_second * ( 8 / 1000.0f32 );
+        sent_bytes_per_second /= sent_bytes_per_second / self.rtt_maximum as u32;
+        acked_bytes_per_second /= acked_bytes_per_second / self.rtt_maximum as u32;
+        self.sent_bandwidth = sent_bytes_per_second as f32 * ( 8.0f32 / 1000.0f32 );
+        self.acked_bandwidth = acked_bytes_per_second as f32 * ( 8.0f32 / 1000.0f32 );
     }
 }
 #[derive(PartialEq)]
@@ -419,7 +421,7 @@ impl Default for ReliableConnection {
 
         ReliableConnection {
             address: SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234),
-            socket: try!(UdpSocket::bind(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234))).unwrap(),
+            socket: try!(UdpSocket::bind(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234))),
             protocolId: 0,
             state: State::Disconnected,
             mode: Mode::Null,
@@ -457,11 +459,11 @@ impl ReliableConnection {
     {
         assert!( self.running );
         println!("stop connection");
-        self.connected = self.is_connected();
+        let connected = self.is_connected();
         self.clear_data();
         drop(self.socket);
         self.running = false;
-        if ( self.connected ) {
+        if ( connected ) {
             self.on_disconnect();
         }
         self.on_stop();
@@ -475,9 +477,9 @@ impl ReliableConnection {
     fn listen(&self)
     {
         println!( "server listening for connection\n" );
-        self.connected = self.is_connected();
+        let connected = self.is_connected();
         self.clear_data();
-        if ( self.connected ) {
+        if ( connected ) {
             self.on_disconnect();
         }
         self.mode = Mode::Server;
@@ -487,9 +489,9 @@ impl ReliableConnection {
     fn connect(&self, addr: SocketAddrV4)
     {
         println!( "client connecting to {}", addr);
-        self.connected = self.is_connected();
+        let connected = self.is_connected();
         self.clear_data();
-        if ( self.connected ) {
+        if ( connected ) {
             self.on_disconnect();
         }
         self.mode = Mode::Client;
@@ -554,22 +556,22 @@ impl ReliableConnection {
             return false;
         }
         // uchar_t packet[size + 4];
-        let mut packet: Vec<u8> = Vec::with_capacity(size + 4);
+        let mut packet: Vec<u8> = Vec::with_capacity((size + 4) as usize);
         packet[0] = ( self.protocolId >> 24 ) as u8 ;
         packet[1] = ( ( self.protocolId >> 16 ) & 0xFF ) as u8;
         packet[2] = ( ( self.protocolId >> 8 ) & 0xFF ) as u8;
         packet[3] = ( ( self.protocolId ) & 0xFF ) as u8;
 
         // memcpy( &packet[4], data, size );
-        ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[4], size);
-        return (self.socket.send_to(packet, &self.address)).unwrap();
+        ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[4], size as usize);
+        return (self.socket.send_to(&packet, &self.address)).unwrap();
     }
 
     pub fn receive_packet(&self, data: &[u8],  size: u32) -> i32
     {
         assert!(self.running);
         // uchar_t packet[size + 4];
-        let mut packet: Vec<u8> = Vec::with_capacity(size + 4);
+        let mut packet: Vec<u8> = Vec::with_capacity((size + 4) as usize);
         let (bytes_read, sender) = self.socket.recv_from(&mut packet);
         if ( bytes_read == 0 ) {
             return 0;
