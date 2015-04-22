@@ -1,3 +1,6 @@
+// todo:
+// use vector or deque instead of linkedlist
+
 #![feature(collections)]
 mod socket {
 
@@ -107,10 +110,6 @@ pub struct ReliabilitySystem {
 }
 
 impl ReliabilitySystem {
-    pub fn new(&self) -> ReliabilitySystem {
-
-    }
-
     pub fn reset(&self)
     {
         self.local_sequence = 0;
@@ -354,7 +353,7 @@ impl ReliabilitySystem {
             }
         }
 
-        while ( (self.ackedQueue.len() > 0) && self.ackedQueue.front().unwrap().time > self.rtt_maximum * 2 - epsilon ) {
+        while ( (self.ackedQueue.len() > 0) && self.ackedQueue.front().unwrap().time > self.rtt_maximum * 2.0f32 - epsilon ) {
             self.ackedQueue.pop_front();
         }
 
@@ -421,7 +420,7 @@ impl Default for ReliableConnection {
 
         ReliableConnection {
             address: SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234),
-            socket: try!(UdpSocket::bind(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234))),
+            socket: UdpSocket::bind(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234)).unwrap(),
             protocolId: 0,
             state: State::Disconnected,
             mode: Mode::Null,
@@ -451,7 +450,6 @@ impl ReliableConnection {
         // if ( !socket.bind( addr ) )
         //     return false;
         self.running = true;
-        self.on_start();
         return true;
     }
 
@@ -552,9 +550,7 @@ impl ReliableConnection {
     pub fn send_packet(&self, data: &mut [u8], size: u32) -> bool
     {
         assert!( self.running );
-        if ( self.address.GetAddress() == 0 ) {
-            return false;
-        }
+
         // uchar_t packet[size + 4];
         let mut packet: Vec<u8> = Vec::with_capacity((size + 4) as usize);
         packet[0] = ( self.protocolId >> 24 ) as u8 ;
@@ -564,7 +560,10 @@ impl ReliableConnection {
 
         // memcpy( &packet[4], data, size );
         ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[4], size as usize);
-        return (self.socket.send_to(&packet, &self.address)).unwrap();
+        match self.socket.send_to(&packet, &self.address) {
+            Ok(result) => return true,
+            Err(..) => return false
+        }
     }
 
     pub fn receive_packet(&self, data: &[u8],  size: u32) -> i32
@@ -573,6 +572,13 @@ impl ReliableConnection {
         // uchar_t packet[size + 4];
         let mut packet: Vec<u8> = Vec::with_capacity((size + 4) as usize);
         let (bytes_read, sender) = self.socket.recv_from(&mut packet);
+
+        let bytes_read = 0usize;
+        let sender = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234);
+        match self.socket.recv_from(&mut packet) {
+            Ok(result) => (bytes_read, sender) = result,
+            Err(..) => return 0,
+        }
         if ( bytes_read == 0 ) {
             return 0;
         }
@@ -586,12 +592,11 @@ impl ReliableConnection {
             return 0;
         }
 
-        if ( (self.mode == Mode::Server) && !self.is_connected )
+        if ( (self.mode == Mode::Server) && !self.is_connected() )
         {
             println!( "server accepts connection from client {}", sender);
             self.state = State::Connected;
             self.address = sender;
-            self.on_connect();
         }
         if ( sender == self.address )
         {
@@ -599,7 +604,6 @@ impl ReliableConnection {
             {
                 println!("client completes connection with server");
                 self.state = State::Connected;
-                self.on_connect();
             }
             self.timeoutAccumulator = 0.0f32;
 
@@ -613,15 +617,14 @@ impl ReliableConnection {
         return 4;
     }
 
-    fn on_start() {
-
+    fn on_stop(&self) {
+        self.clear_data();
     }
-    fn on_stop() {
 
-    }
     fn on_connect() {
 
     }
+
     fn on_disconnect(&self) {
         self.clear_data();
     }
