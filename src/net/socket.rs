@@ -66,18 +66,15 @@ impl PacketQueue for VecDeque<PacketData> {
             self.push_back(p);
         }
         else {
-            if ( !sequence_more_recent( p.sequence, self.front().unwrap().sequence, max_sequence ) ) {
+            if ( sequence_more_recent( p.sequence, self.back().unwrap().sequence, max_sequence ) ) {
+                self.push_back(p );
+            } else if ( !sequence_more_recent( p.sequence, self.front().unwrap().sequence, max_sequence )) {
                 self.push_front( p );
             }
-            else if ( sequence_more_recent( p.sequence, self.back().unwrap().sequence, max_sequence ) ) {
-                self.push_back(p );
-            }
             else {
-                let mut itor = self.iter_mut();
-                loop {
-                    // use iter find
-                    if ( sequence_more_recent( itor.next().unwrap().sequence, p.sequence, max_sequence ) ) {
-                        itor.insert_next(p);
+                for i in 0..self.len() {
+                    if ( sequence_more_recent( self.get(i).unwrap().sequence, p.sequence, max_sequence ) ) {
+                        self.insert(i + 1, p);
                         break;
                     }
                 }
@@ -207,7 +204,7 @@ impl ReliabilitySystem {
 
     
 
-    fn generate_ack_bits(&self, ack: u32, received_queue: &LinkedList<PacketData> , max_sequence: u32) -> u32
+    fn generate_ack_bits(&self, ack: u32, received_queue: &VecDeque<PacketData> , max_sequence: u32) -> u32
     {
         let ack_bits = 0u32;
         for itor in received_queue.iter() {
@@ -224,7 +221,7 @@ impl ReliabilitySystem {
     }
 
     fn process_ack(&self, ack: u32,  ack_bits: u32,
-                             pending_ack_queue: &LinkedList<PacketData>, acked_queue: &LinkedList<PacketData>,
+                             pending_ack_queue: &VecDeque<PacketData>, acked_queue: &VecDeque<PacketData>,
                              acks: &Vec<u32>, acked_packets: u32,
                              rtt: &mut f32, max_sequence: u32 )
     {
@@ -232,6 +229,7 @@ impl ReliabilitySystem {
             return;
         }
 
+        let index = 0usize;
         for itor in pending_ack_queue.iter()
         {
             let acked = false;
@@ -255,8 +253,9 @@ impl ReliabilitySystem {
                 acked_queue.insert_sorted( *itor, max_sequence );
                 acks.push( itor.sequence );
                 acked_packets = acked_packets + 1;
-                itor = *pending_ack_queue.erase( itor );
+                pending_ack_queue.remove( index );
             }
+            index += 1;
         }
     }
 
@@ -572,7 +571,6 @@ impl ReliableConnection {
         assert!(self.running);
         // uchar_t packet[size + 4];
         let mut packet: Vec<u8> = Vec::with_capacity((size + 4) as usize);
-        let (bytes_read, sender) = self.socket.recv_from(&mut packet);
 
         let bytes_read = 0usize;
         let sender = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234);
@@ -639,7 +637,7 @@ impl ReliableConnection {
 
 #[test]
 fn test_linked_list() {
-    let mut ll: LinkedList<PacketData> = LinkedList::new();
+    let mut ll: VecDeque<PacketData> = VecDeque::new();
     let pd0 = PacketData{sequence: 0, time: 0.0f32, size: 128u32};
     ll.insert_sorted(pd0, 128u32);
 }
