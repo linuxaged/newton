@@ -5,7 +5,7 @@
 mod socket {
 
 use std::default::Default;
-use std::net::{UdpSocket, SocketAddrV4, Ipv4Addr};
+use std::net::{UdpSocket, SocketAddr, SocketAddrV4, Ipv4Addr};
 use std::collections::VecDeque;
 use std::vec;
 use std::vec::Vec;
@@ -202,7 +202,7 @@ impl ReliabilitySystem {
         return (( s1 > s2 ) && ( s1 - s2 <= max_sequence / 2 )) || (( s2 > s1 ) && ( s2 - s1 > max_sequence / 2 ));
     }
 
-    
+
 
     fn generate_ack_bits(&self, ack: u32, received_queue: &VecDeque<PacketData> , max_sequence: u32) -> u32
     {
@@ -402,7 +402,7 @@ pub enum Mode {
 }
 
 pub struct ReliableConnection {
-    address:            SocketAddrV4,
+    address:            SocketAddr,
     socket:             UdpSocket,
 
     protocolId:         u32,
@@ -419,7 +419,7 @@ impl Default for ReliableConnection {
     fn default () -> ReliableConnection {
 
         ReliableConnection {
-            address: SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234),
+            address: SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234)),
             socket: UdpSocket::bind(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234)).unwrap(),
             protocolId: 0,
             state: State::Disconnected,
@@ -443,7 +443,7 @@ impl ReliableConnection {
         }
 
     }
-    fn start(&self, addr: SocketAddrV4) -> bool
+    fn start(&self, addr: SocketAddr) -> bool
     {
         assert!( !self.running );
         println!( "start connection on addr {}", addr );
@@ -484,7 +484,7 @@ impl ReliableConnection {
         self.state = State::Listening;
     }
 
-    fn connect(&self, addr: SocketAddrV4)
+    fn connect(&self, addr: SocketAddr)
     {
         println!( "client connecting to {}", addr);
         let connected = self.is_connected();
@@ -573,7 +573,7 @@ impl ReliableConnection {
         let mut packet: Vec<u8> = Vec::with_capacity((size + 4) as usize);
 
         let bytes_read = 0usize;
-        let sender = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234);
+        let sender = SocketAddr::new(Ipv4Addr::new(127, 0, 0, 1), 1234);
         match self.socket.recv_from(&mut packet) {
             Ok(result) => (bytes_read, sender) = result,
             Err(..) => return 0,
@@ -631,7 +631,7 @@ impl ReliableConnection {
     fn clear_data(&self) {
         self.state = State::Disconnected;
         self.timeoutAccumulator = 0.0f32;
-        self.address = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234);
+        self.address = SocketAddr::new(Ipv4Addr::new(127, 0, 0, 1), 1234);
     }
 }
 
