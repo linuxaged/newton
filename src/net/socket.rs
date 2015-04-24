@@ -108,7 +108,7 @@ pub struct ReliabilitySystem {
 }
 
 impl ReliabilitySystem {
-    pub fn reset(&self)
+    pub fn reset(&mut self)
     {
         self.local_sequence = 0;
         self.remote_sequence = 0;
@@ -126,7 +126,7 @@ impl ReliabilitySystem {
         self.rtt_maximum = 1.0f32;
     }
 
-    fn PacketSent(&self, size: u32 )
+    fn PacketSent(&mut self, size: u32 )
     {
         if ( self.sentQueue.exists( self.local_sequence ) )
         {
@@ -137,7 +137,7 @@ impl ReliabilitySystem {
         }
         assert!( !self.sentQueue.exists( self.local_sequence ) );
         assert!( !self.pendingAckQueue.exists( self.local_sequence ) );
-        let data = PacketData::default();
+        let mut data = PacketData::default();
         data.sequence = self.local_sequence;
         data.time = 0.0f32;
         data.size = size;
@@ -150,7 +150,7 @@ impl ReliabilitySystem {
         }
     }
 
-    fn PacketReceived(&self, sequence: u32, size: u32 )
+    fn PacketReceived(&mut self, sequence: u32, size: u32 )
     {
         self.recv_packets += 1;
         if ( self.receivedQueue.exists( sequence ) ) {
@@ -176,7 +176,7 @@ impl ReliabilitySystem {
         self.process_ack( ack, ack_bits, &self.pendingAckQueue, &self.ackedQueue, &self.acks, self.acked_packets, &mut self.rtt, self.max_sequence );
     }
 
-    fn Update(&self, deltaTime: f32 )
+    fn Update(&mut self, deltaTime: f32 )
     {
         self.acks.clear();
         self.AdvanceQueueTime( deltaTime );
@@ -229,10 +229,10 @@ impl ReliabilitySystem {
             return;
         }
 
-        let index = 0usize;
+        let mut index = 0usize;
         for itor in pending_ack_queue.iter()
         {
-            let acked = false;
+            let mut acked = false;
 
             if ( itor.sequence == ack )
             {
@@ -316,7 +316,7 @@ impl ReliabilitySystem {
         12
     }
 
-    fn AdvanceQueueTime(&self, deltaTime: f32 )
+    fn AdvanceQueueTime(&mut self, deltaTime: f32 )
     {
         for itor in self.sentQueue.iter() {
             itor.time += deltaTime;
@@ -335,7 +335,7 @@ impl ReliabilitySystem {
         }
     }
 
-    fn UpdateQueues(&self)
+    fn UpdateQueues(&mut self)
     {
         let epsilon = 0.001f32;
 
@@ -364,14 +364,14 @@ impl ReliabilitySystem {
         }
     }
 
-    fn UpdateStats(&self)
+    fn UpdateStats(&mut self)
     {
-        let sent_bytes_per_second = 0;
+        let mut sent_bytes_per_second = 0;
         for itor in self.sentQueue.iter() {
             sent_bytes_per_second += itor.size;
         }
-        let acked_packets_per_second = 0;
-        let acked_bytes_per_second = 0;
+        let mut acked_packets_per_second = 0;
+        let mut acked_bytes_per_second = 0;
         for itor in self.ackedQueue.iter()
         {
             if ( itor.time >= self.rtt_maximum )
@@ -443,7 +443,7 @@ impl ReliableConnection {
         }
 
     }
-    fn start(&self, addr: SocketAddr) -> bool
+    fn start(&mut self, addr: SocketAddr) -> bool
     {
         assert!( !self.running );
         println!( "start connection on addr {}", addr );
@@ -453,7 +453,7 @@ impl ReliableConnection {
         return true;
     }
 
-    fn stop(&self)
+    fn stop(&mut self)
     {
         assert!( self.running );
         println!("stop connection");
@@ -472,7 +472,7 @@ impl ReliableConnection {
         self.running
     }
 
-    fn listen(&self)
+    fn listen(&mut self)
     {
         println!( "server listening for connection\n" );
         let connected = self.is_connected();
@@ -484,7 +484,7 @@ impl ReliableConnection {
         self.state = State::Listening;
     }
 
-    fn connect(&self, addr: SocketAddr)
+    fn connect(&mut self, addr: SocketAddr)
     {
         println!( "client connecting to {}", addr);
         let connected = self.is_connected();
@@ -559,23 +559,30 @@ impl ReliableConnection {
         packet[3] = ( ( self.protocolId ) & 0xFF ) as u8;
 
         // memcpy( &packet[4], data, size );
-        ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[4], size as usize);
+        unsafe {
+            ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[4], size as usize);
+        }
+        
         match self.socket.send_to(&packet, &self.address) {
             Ok(result) => return true,
             Err(..) => return false
         }
     }
 
-    pub fn receive_packet(&self, data: &[u8],  size: u32) -> i32
+    pub fn receive_packet(&mut self, data: &[u8],  size: u32) -> i32
     {
         assert!(self.running);
         // uchar_t packet[size + 4];
         let mut packet: Vec<u8> = Vec::with_capacity((size + 4) as usize);
 
-        let bytes_read = 0usize;
-        let sender = SocketAddr::new(Ipv4Addr::new(127, 0, 0, 1), 1234);
+        let mut bytes_read = 0usize;
+        let mut sender = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234));
         match self.socket.recv_from(&mut packet) {
-            Ok(result) => (bytes_read, sender) = result,
+            Ok(result) => {
+                let (_bytes_read, _sender) = result;
+                bytes_read = _bytes_read;
+                sender = _sender;
+            },
             Err(..) => return 0,
         }
         if ( bytes_read == 0 ) {
@@ -607,7 +614,10 @@ impl ReliableConnection {
             self.timeoutAccumulator = 0.0f32;
 
             //memcpy( data, &packet[4], bytes_read - 4 );
-            ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[4], bytes_read - 4);
+            unsafe {
+                ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[4], bytes_read - 4);
+            }
+            
         }
         return 0;
     }
@@ -628,10 +638,10 @@ impl ReliableConnection {
         self.clear_data();
     }
 
-    fn clear_data(&self) {
+    fn clear_data(&mut self) {
         self.state = State::Disconnected;
         self.timeoutAccumulator = 0.0f32;
-        self.address = SocketAddr::new(Ipv4Addr::new(127, 0, 0, 1), 1234);
+        self.address = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234));
     }
 }
 
