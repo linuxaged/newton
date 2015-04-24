@@ -11,6 +11,7 @@ use std::vec;
 use std::vec::Vec;
 use std::ptr;
 
+#[derive(Copy)]
 struct PacketData {
     sequence: u32,          // packet sequence number
     time:     f32,          // time offset since packet was sent or received (depending on context)
@@ -206,7 +207,7 @@ impl ReliabilitySystem {
 
     fn generate_ack_bits(&self, ack: u32, received_queue: &VecDeque<PacketData> , max_sequence: u32) -> u32
     {
-        let ack_bits = 0u32;
+        let mut ack_bits = 0u32;
         for itor in received_queue.iter() {
             if ( itor.sequence == ack || sequence_more_recent( itor.sequence, ack, max_sequence ) ){
                 break;
