@@ -11,7 +11,7 @@ use std::vec;
 use std::vec::Vec;
 use std::ptr;
 
-#[derive(Copy)]
+#[derive(Clone, Copy)]
 struct PacketData {
     sequence: u32,          // packet sequence number
     time:     f32,          // time offset since packet was sent or received (depending on context)
@@ -157,7 +157,7 @@ impl ReliabilitySystem {
         if ( self.receivedQueue.exists( sequence ) ) {
             return;
         }
-        let data = PacketData::default();
+        let mut data = PacketData::default();
         data.sequence = sequence;
         data.time = 0.0f32;
         data.size = size;
@@ -319,19 +319,19 @@ impl ReliabilitySystem {
 
     fn AdvanceQueueTime(&mut self, deltaTime: f32 )
     {
-        for itor in self.sentQueue.iter() {
+        for itor in self.sentQueue.iter_mut() {
             itor.time += deltaTime;
         }
 
-        for itor in self.receivedQueue.iter() {
+        for itor in self.receivedQueue.iter_mut() {
             itor.time += deltaTime;
         }
 
-        for itor in self.pendingAckQueue.iter() {
+        for itor in self.pendingAckQueue.iter_mut() {
             itor.time += deltaTime;
         }
 
-        for itor in self.ackedQueue.iter() {
+        for itor in self.ackedQueue.iter_mut() {
             itor.time += deltaTime;
         }
     }
