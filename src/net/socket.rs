@@ -172,9 +172,9 @@ impl ReliabilitySystem {
         return self.generate_ack_bits( self.GetRemoteSequence(), &self.receivedQueue, self.max_sequence );
     }
 
-    fn ProcessAck(&self, ack: u32, ack_bits: u32 )
+    fn ProcessAck(&mut self, ack: u32, ack_bits: u32 )
     {
-        self.process_ack( ack, ack_bits, self.pendingAckQueue, self.ackedQueue, self.acks, self.acked_packets, &mut self.rtt, self.max_sequence );
+        self.process_ack( ack, ack_bits);
     }
 
     fn Update(&mut self, deltaTime: f32 )
@@ -222,17 +222,14 @@ impl ReliabilitySystem {
     }
 
     // need to add lifetime
-    fn process_ack(&self, ack: u32,  ack_bits: u32,
-                             pending_ack_queue: VecDeque<PacketData>, acked_queue: VecDeque<PacketData>,
-                             acks: Vec<u32>, acked_packets: u32,
-                             rtt: &mut f32, max_sequence: u32 )
+    fn process_ack(&mut self, ack: u32,  ack_bits: u32)
     {
-        if ( pending_ack_queue.is_empty() ) {
+        if ( self.pendingAckQueue.is_empty() ) {
             return;
         }
 
         let mut index = 0usize;
-        for itor in pending_ack_queue.iter()
+        for itor in self.pendingAckQueue.iter()
         {
             let mut acked = false;
 
@@ -240,9 +237,9 @@ impl ReliabilitySystem {
             {
                 acked = true;
             }
-            else if ( !sequence_more_recent( itor.sequence, ack, max_sequence ) )
+            else if ( !sequence_more_recent( itor.sequence, ack, self.max_sequence ) )
             {
-                let bit_index = bit_index_for_sequence( itor.sequence, ack, max_sequence );
+                let bit_index = bit_index_for_sequence( itor.sequence, ack, self.max_sequence );
                 if ( bit_index <= 31 ) {
                     acked = (( ack_bits >> bit_index ) & 1) != 0;
                 }
@@ -250,12 +247,12 @@ impl ReliabilitySystem {
 
             if ( acked )
             {
-                *rtt += ( itor.time - *rtt ) * 0.1f32;
+                self.rtt += ( itor.time - self.rtt ) * 0.1f32;
 
-                acked_queue.insert_sorted( *itor, max_sequence );
-                acks.push( itor.sequence );
-                acked_packets = acked_packets + 1;
-                pending_ack_queue.remove( index );
+                self.ackedQueue.insert_sorted( *itor, self.max_sequence );
+                self.acks.push( itor.sequence );
+                self.acked_packets = self.acked_packets + 1;
+                self.pendingAckQueue.remove( index );
             }
             index += 1;
         }
@@ -524,7 +521,7 @@ impl ReliableConnection {
         self.mode
     }
 
-    pub fn update(&self, deltaTime: f32)
+    pub fn update(&mut self, deltaTime: f32)
     {
         assert!( self.running );
         self.timeoutAccumulator += deltaTime;
@@ -628,7 +625,7 @@ impl ReliableConnection {
         return 4;
     }
 
-    fn on_stop(&self) {
+    fn on_stop(&mut self) {
         self.clear_data();
     }
 
@@ -636,7 +633,7 @@ impl ReliableConnection {
 
     }
 
-    fn on_disconnect(&self) {
+    fn on_disconnect(&mut self) {
         self.clear_data();
     }
 
