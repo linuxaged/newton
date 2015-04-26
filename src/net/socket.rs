@@ -174,7 +174,7 @@ impl ReliabilitySystem {
 
     fn ProcessAck(&self, ack: u32, ack_bits: u32 )
     {
-        self.process_ack( ack, ack_bits, &self.pendingAckQueue, &self.ackedQueue, &self.acks, self.acked_packets, &mut self.rtt, self.max_sequence );
+        self.process_ack( ack, ack_bits, self.pendingAckQueue, self.ackedQueue, self.acks, self.acked_packets, &mut self.rtt, self.max_sequence );
     }
 
     fn Update(&mut self, deltaTime: f32 )
@@ -221,9 +221,10 @@ impl ReliabilitySystem {
         return ack_bits;
     }
 
+    // need to add lifetime
     fn process_ack(&self, ack: u32,  ack_bits: u32,
-                             pending_ack_queue: &VecDeque<PacketData>, acked_queue: &VecDeque<PacketData>,
-                             acks: &Vec<u32>, acked_packets: u32,
+                             pending_ack_queue: VecDeque<PacketData>, acked_queue: VecDeque<PacketData>,
+                             acks: Vec<u32>, acked_packets: u32,
                              rtt: &mut f32, max_sequence: u32 )
     {
         if ( pending_ack_queue.is_empty() ) {
@@ -563,7 +564,7 @@ impl ReliableConnection {
         unsafe {
             ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[4], size as usize);
         }
-        
+
         match self.socket.send_to(&packet, &self.address) {
             Ok(result) => return true,
             Err(..) => return false
@@ -618,7 +619,7 @@ impl ReliableConnection {
             unsafe {
                 ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[4], bytes_read - 4);
             }
-            
+
         }
         return 0;
     }
