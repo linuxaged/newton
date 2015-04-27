@@ -1,6 +1,3 @@
-// todo:
-// use vector or deque instead of linkedlist
-
 #![feature(collections)]
 mod socket {
 
@@ -219,26 +216,6 @@ impl ReliabilitySystem {
         return ack_bits;
     }
 
-    // one implement
-    // struct Tester { x: i8 }
-
-    // impl Tester{
-    //     fn traverse<F>(&mut self, mut f: F)
-    //         where F: FnMut(&mut Tester)
-    //     {
-    //         f(self);
-    //     }
-    // }
-
-    // fn main() {
-    //     let mut tester = Tester { x: 8 };
-    //     tester.traverse(|z| z.x += 1);
-    //     println!("{}", tester.x);
-    // }
-    // fn process_ack<F>(&mut self, mut f: F) where F: FnMut(&mut ReliabilitySystem) {
-    //     f(self);
-    // }
-    // need to add lifetime
     fn process_ack(&mut self, ack: u32,  ack_bits: u32)
     {
         if ( self.pendingAckQueue.is_empty() ) {
