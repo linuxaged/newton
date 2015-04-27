@@ -245,69 +245,36 @@ impl ReliabilitySystem {
             return;
         }
 
-        self.pendingAckQueue.iter()
-        .position(|&n| { n.sequence == ack })
-        .map(|e| self.pendingAckQueue.remove(e))
+        let _max_sequence = &mut self.max_sequence;
+        let _rtt = &mut self.rtt;
+        let _ackedQueue = &mut self.ackedQueue;
+        let _acks = &mut self.acks;
+        let _acked_packets = &mut self.acked_packets;
+
+        let _pendingAckQueue = &mut self.pendingAckQueue;
+        _pendingAckQueue.iter()
+        .position(|&elm| {
+                let mut acked = false;
+                if ( elm.sequence == ack )
+                {
+                    acked = true;
+                } else if !sequence_more_recent( elm.sequence, ack, *_max_sequence) {
+                    let bit_index = bit_index_for_sequence( elm.sequence, ack, *_max_sequence );
+                    if ( bit_index <= 31 ) {
+                        acked = (( ack_bits >> bit_index ) & 1) != 0;
+                    }
+                }
+                if acked {
+                    *_rtt += ( elm.time - *_rtt ) * 0.1f32;
+                    _ackedQueue.insert_sorted( elm, *_max_sequence );
+                    _acks.push( elm.sequence );
+                    *_acked_packets += 1;
+                }
+                acked
+         })
+        .map(|e| _pendingAckQueue.remove(e))
         .is_some();
 
-        // self.pendingAckQueue.iter()
-        // .position(|&elm| {
-        //         let mut acked = false;
-        //         if ( elm.sequence == ack )
-        //         {
-        //             acked = true;
-        //         }
-        //         else if ( !sequence_more_recent( elm.sequence, ack, self.max_sequence ) )
-        //         {
-        //             let bit_index = bit_index_for_sequence( elm.sequence, ack, self.max_sequence );
-        //             if ( bit_index <= 31 ) {
-        //                 acked = (( ack_bits >> bit_index ) & 1) != 0;
-        //             }
-        //         }
-        //         if acked {
-        //             self.rtt += ( elm.time - self.rtt ) * 0.1f32;
-
-        //             self.ackedQueue.insert_sorted( elm, self.max_sequence );
-        //             self.acks.push( elm.sequence );
-        //             self.acked_packets = self.acked_packets + 1;
-        //         }
-        //         acked
-        //     }
-        // )
-        // .map(|e| {
-        //         self.pendingAckQueue.remove(e)
-        //     }
-        // );
-
-
-        // let mut index = 0usize;
-        // for itor in self.pendingAckQueue.iter()
-        // {
-        //     let mut acked = false;
-
-        //     if ( itor.sequence == ack )
-        //     {
-        //         acked = true;
-        //     }
-        //     else if ( !sequence_more_recent( itor.sequence, ack, self.max_sequence ) )
-        //     {
-        //         let bit_index = bit_index_for_sequence( itor.sequence, ack, self.max_sequence );
-        //         if ( bit_index <= 31 ) {
-        //             acked = (( ack_bits >> bit_index ) & 1) != 0;
-        //         }
-        //     }
-
-        //     if ( acked )
-        //     {
-        //         self.rtt += ( itor.time - self.rtt ) * 0.1f32;
-
-        //         self.ackedQueue.insert_sorted( *itor, self.max_sequence );
-        //         self.acks.push( itor.sequence );
-        //         self.acked_packets = self.acked_packets + 1;
-        //         self.pendingAckQueue.remove( index );
-        //     }
-        //     index += 1;
-        // }
     }
 
     // data accessors
