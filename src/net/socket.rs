@@ -174,7 +174,7 @@ impl ReliabilitySystem {
 
     fn ProcessAck(&mut self, ack: u32, ack_bits: u32 )
     {
-        self.process_ack( ack, ack_bits);
+        self.process_ack(ack, ack_bits);
     }
 
     fn Update(&mut self, deltaTime: f32 )
@@ -203,8 +203,6 @@ impl ReliabilitySystem {
         return (( s1 > s2 ) && ( s1 - s2 <= max_sequence / 2 )) || (( s2 > s1 ) && ( s2 - s1 > max_sequence / 2 ));
     }
 
-
-
     fn generate_ack_bits(&self, ack: u32, received_queue: &VecDeque<PacketData> , max_sequence: u32) -> u32
     {
         let mut ack_bits = 0u32;
@@ -221,6 +219,25 @@ impl ReliabilitySystem {
         return ack_bits;
     }
 
+    // one implement
+    // struct Tester { x: i8 }
+
+    // impl Tester{
+    //     fn traverse<F>(&mut self, mut f: F)
+    //         where F: FnMut(&mut Tester)
+    //     {
+    //         f(self);
+    //     }
+    // }
+
+    // fn main() {
+    //     let mut tester = Tester { x: 8 };
+    //     tester.traverse(|z| z.x += 1);
+    //     println!("{}", tester.x);
+    // }
+    // fn process_ack<F>(&mut self, mut f: F) where F: FnMut(&mut ReliabilitySystem) {
+    //     f(self);
+    // }
     // need to add lifetime
     fn process_ack(&mut self, ack: u32,  ack_bits: u32)
     {
@@ -228,34 +245,69 @@ impl ReliabilitySystem {
             return;
         }
 
-        let mut index = 0usize;
-        for itor in self.pendingAckQueue.iter()
-        {
-            let mut acked = false;
+        self.pendingAckQueue.iter()
+        .position(|&n| { n.sequence == ack })
+        .map(|e| self.pendingAckQueue.remove(e))
+        .is_some();
 
-            if ( itor.sequence == ack )
-            {
-                acked = true;
-            }
-            else if ( !sequence_more_recent( itor.sequence, ack, self.max_sequence ) )
-            {
-                let bit_index = bit_index_for_sequence( itor.sequence, ack, self.max_sequence );
-                if ( bit_index <= 31 ) {
-                    acked = (( ack_bits >> bit_index ) & 1) != 0;
-                }
-            }
+        // self.pendingAckQueue.iter()
+        // .position(|&elm| {
+        //         let mut acked = false;
+        //         if ( elm.sequence == ack )
+        //         {
+        //             acked = true;
+        //         }
+        //         else if ( !sequence_more_recent( elm.sequence, ack, self.max_sequence ) )
+        //         {
+        //             let bit_index = bit_index_for_sequence( elm.sequence, ack, self.max_sequence );
+        //             if ( bit_index <= 31 ) {
+        //                 acked = (( ack_bits >> bit_index ) & 1) != 0;
+        //             }
+        //         }
+        //         if acked {
+        //             self.rtt += ( elm.time - self.rtt ) * 0.1f32;
 
-            if ( acked )
-            {
-                self.rtt += ( itor.time - self.rtt ) * 0.1f32;
+        //             self.ackedQueue.insert_sorted( elm, self.max_sequence );
+        //             self.acks.push( elm.sequence );
+        //             self.acked_packets = self.acked_packets + 1;
+        //         }
+        //         acked
+        //     }
+        // )
+        // .map(|e| {
+        //         self.pendingAckQueue.remove(e)
+        //     }
+        // );
 
-                self.ackedQueue.insert_sorted( *itor, self.max_sequence );
-                self.acks.push( itor.sequence );
-                self.acked_packets = self.acked_packets + 1;
-                self.pendingAckQueue.remove( index );
-            }
-            index += 1;
-        }
+
+        // let mut index = 0usize;
+        // for itor in self.pendingAckQueue.iter()
+        // {
+        //     let mut acked = false;
+
+        //     if ( itor.sequence == ack )
+        //     {
+        //         acked = true;
+        //     }
+        //     else if ( !sequence_more_recent( itor.sequence, ack, self.max_sequence ) )
+        //     {
+        //         let bit_index = bit_index_for_sequence( itor.sequence, ack, self.max_sequence );
+        //         if ( bit_index <= 31 ) {
+        //             acked = (( ack_bits >> bit_index ) & 1) != 0;
+        //         }
+        //     }
+
+        //     if ( acked )
+        //     {
+        //         self.rtt += ( itor.time - self.rtt ) * 0.1f32;
+
+        //         self.ackedQueue.insert_sorted( *itor, self.max_sequence );
+        //         self.acks.push( itor.sequence );
+        //         self.acked_packets = self.acked_packets + 1;
+        //         self.pendingAckQueue.remove( index );
+        //     }
+        //     index += 1;
+        // }
     }
 
     // data accessors
@@ -458,7 +510,7 @@ impl ReliableConnection {
         println!("stop connection");
         let connected = self.is_connected();
         self.clear_data();
-        drop(self.socket);
+        // drop(self.socket);
         self.running = false;
         if ( connected ) {
             self.on_disconnect();
@@ -516,7 +568,7 @@ impl ReliableConnection {
         self.state == State::Listening
     }
 
-    fn get_mode(&self) -> Mode
+    fn get_mode(self) -> Mode
     {
         self.mode
     }
