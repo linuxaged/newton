@@ -675,7 +675,7 @@ impl ReliableConnection {
         self.reliabilitySystem.Update( deltaTime );
     }
 
-    fn WriteInteger(&self, data: &mut[u8], value: u32)
+    fn WriteInteger(&self, data: &mut [u8], value: u32)
     {
         data[0] = ( value >> 24 ) as u8;
         data[1] = ( ( value >> 16 ) & 0xFF ) as u8;
@@ -683,11 +683,11 @@ impl ReliableConnection {
         data[3] = ( value & 0xFF ) as u8;
     }
 
-    fn WriteHeader(&self, header: &mut[u8], sequence: u32, ack: u32, ack_bits: u32 )
+    fn WriteHeader(&self, header: &mut [u8], sequence: u32, ack: u32, ack_bits: u32 )
     {
-        self.WriteInteger( header[0..], sequence );
-        self.WriteInteger( header[4..], ack );
-        self.WriteInteger( header[8..], ack_bits );
+        self.WriteInteger( header.slice(0,4), sequence );
+        self.WriteInteger( header.slice(4,8), ack );
+        self.WriteInteger( header.slice(8,12), ack_bits );
     }
 
     fn ReadInteger(&self, data: &mut[u8], value: & u32 )
@@ -701,9 +701,9 @@ impl ReliableConnection {
 
     fn ReadHeader(&self,header: Vec<u8>, sequence: &u32, ack: &u32, ack_bits: &u32 )
     {
-        &self.ReadInteger( &mut header[0..], sequence );
-        &self.ReadInteger( &mut header[4..], ack );
-        &self.ReadInteger( &mut header[8..], ack_bits );
+        &self.ReadInteger( &header.slice(0,4), sequence );
+        &self.ReadInteger( &header.slice(4,8), ack );
+        &self.ReadInteger( &header.slice(8,12), ack_bits );
     }
 
     fn get_header_size() -> i32 {
