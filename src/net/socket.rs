@@ -1,3 +1,7 @@
+// need to understand DST
+// http://smallcultfollowing.com/babysteps/blog/2014/01/05/dst-take-5/
+// https://air.mozilla.org/dynamically-sized-typed-nick-cameron/
+// http://stackoverflow.com/questions/25740916/how-do-you-actually-use-dynamically-sized-types-in-rust
 #![feature(collections)]
 mod socket {
 
@@ -12,7 +16,7 @@ use std::ptr;
 struct PacketData {
     sequence: u32,          // packet sequence number
     time:     f32,          // time offset since packet was sent or received (depending on context)
-    size:     u32,          // packet size in bytes
+    size:     usize,          // packet size in bytes
 }
 
 impl Default for PacketData {
@@ -124,7 +128,7 @@ impl ReliabilitySystem {
         self.rtt_maximum = 1.0f32;
     }
 
-    fn PacketSent(&mut self, size: u32 )
+    fn PacketSent(&mut self, size: usize )
     {
         if ( self.sentQueue.exists( self.local_sequence ) )
         {
@@ -148,7 +152,7 @@ impl ReliabilitySystem {
         }
     }
 
-    fn PacketReceived(&mut self, sequence: u32, size: u32 )
+    fn PacketReceived(&mut self, sequence: u32, size: usize )
     {
         self.recv_packets += 1;
         if ( self.receivedQueue.exists( sequence ) ) {
@@ -375,8 +379,8 @@ impl ReliabilitySystem {
                 acked_bytes_per_second += itor.size;
             }
         }
-        sent_bytes_per_second /= sent_bytes_per_second / self.rtt_maximum as u32;
-        acked_bytes_per_second /= acked_bytes_per_second / self.rtt_maximum as u32;
+        sent_bytes_per_second /=  self.rtt_maximum as usize;
+        acked_bytes_per_second /=  self.rtt_maximum as usize;
         self.sent_bandwidth = sent_bytes_per_second as f32 * ( 8.0f32 / 1000.0f32 );
         self.acked_bandwidth = acked_bytes_per_second as f32 * ( 8.0f32 / 1000.0f32 );
     }
@@ -542,12 +546,12 @@ impl ReliableConnection {
         }
     }
     // 添加4字节的 协议ID 后发送
-    pub fn send_packet(&self, data: &mut [u8], size: u32) -> bool
+    pub fn send_packet(&self, data: &[u8], size: usize) -> bool
     {
         assert!( self.running );
 
         // uchar_t packet[size + 4];
-        let mut packet: Vec<u8> = Vec::with_capacity((size + 4) as usize);
+        let mut packet: Vec<u8> = Vec::with_capacity(size + 4);
         packet[0] = ( self.protocolId >> 24 ) as u8 ;
         packet[1] = ( ( self.protocolId >> 16 ) & 0xFF ) as u8;
         packet[2] = ( ( self.protocolId >> 8 ) & 0xFF ) as u8;
@@ -555,7 +559,7 @@ impl ReliableConnection {
 
         // memcpy( &packet[4], data, size );
         unsafe {
-            ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[4], size as usize);
+            ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[4], size);
         }
 
         match self.socket.send_to(&packet, &self.address) {
@@ -564,11 +568,11 @@ impl ReliableConnection {
         }
     }
 
-    pub fn receive_packet(&mut self, data: &[u8],  size: u32) -> i32
+    pub fn receive_packet(&mut self, data: &[u8],  size: usize) -> usize
     {
         assert!(self.running);
         // uchar_t packet[size + 4];
-        let mut packet: Vec<u8> = Vec::with_capacity((size + 4) as usize);
+        let mut packet: Vec<u8> = Vec::with_capacity(size + 4);
 
         let mut bytes_read = 0usize;
         let mut sender = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1234));
@@ -612,9 +616,94 @@ impl ReliableConnection {
             unsafe {
                 ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[4], bytes_read - 4);
             }
-
+            return bytes_read - 4;
         }
         return 0;
+    }
+
+    // overriden functions from "Connection"
+    fn SendPacket(&mut self, data: &mut[u8],  size: usize ) -> bool
+    {
+        let header = 12usize;
+        let mut packet: Vec<u8> = Vec::with_capacity(header + size);
+        let seq = self.reliabilitySystem.GetLocalSequence();
+        let ack = self.reliabilitySystem.GetRemoteSequence();
+        let ack_bits = self.reliabilitySystem.GenerateAckBits();
+        self.WriteHeader( &packet, seq, ack, ack_bits );
+
+        // memcpy( packet + header, data, size );
+        unsafe {
+            ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[header], size);
+        }
+        if ( !self.send_packet( &packet[0..], size + header ) ) {
+            return false;
+        }
+        self.reliabilitySystem.PacketSent( size );
+        return true;
+    }
+
+    fn ReceivePacket(&mut self, data: &[u8], size: usize ) -> usize
+    {
+        let header = 12usize;
+        if ( size <= header ) {
+            return 0;
+        }
+        let mut packet: Vec<u8> = Vec::with_capacity(header + size);
+        let received_bytes = self.receive_packet( &packet[0..], size + header );
+        if ( received_bytes == 0 ) {
+            return 0;
+        }
+        if ( received_bytes <= header ) {
+            return 0;
+        }
+        let packet_sequence = 0u32;
+        let packet_ack = 0u32;
+        let packet_ack_bits = 0u32;
+        self.ReadHeader( packet, &packet_sequence, &packet_ack, &packet_ack_bits );
+        self.reliabilitySystem.PacketReceived( packet_sequence, received_bytes - header );
+        self.reliabilitySystem.ProcessAck( packet_ack, packet_ack_bits );
+
+        // memcpy( data, packet + header, received_bytes - header );
+        unsafe {
+            ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[header], received_bytes - header);
+        }
+        return received_bytes - header;
+    }
+
+    fn Update(&self, deltaTime: f32) {
+        self.update( deltaTime );
+        self.reliabilitySystem.Update( deltaTime );
+    }
+
+    fn WriteInteger(&self, data: &mut[u8], value: u32)
+    {
+        data[0] = ( value >> 24 ) as u8;
+        data[1] = ( ( value >> 16 ) & 0xFF ) as u8;
+        data[2] = ( ( value >> 8 ) & 0xFF ) as u8;
+        data[3] = ( value & 0xFF ) as u8;
+    }
+
+    fn WriteHeader(&self, header: &mut[u8], sequence: u32, ack: u32, ack_bits: u32 )
+    {
+        self.WriteInteger( header[0..], sequence );
+        self.WriteInteger( header[4..], ack );
+        self.WriteInteger( header[8..], ack_bits );
+    }
+
+    fn ReadInteger(&self, data: &mut[u8], value: & u32 )
+    {
+        *value = ( ((data[0] << 24) as u32) |
+                  ((data[1] << 16) as u32) |
+                  ((data[2] << 8 ) as u32) |
+                  ((data[3]      ) as u32)
+                );
+    }
+
+    fn ReadHeader(&self,header: Vec<u8>, sequence: &u32, ack: &u32, ack_bits: &u32 )
+    {
+        &self.ReadInteger( &mut header[0..], sequence );
+        &self.ReadInteger( &mut header[4..], ack );
+        &self.ReadInteger( &mut header[8..], ack_bits );
     }
 
     fn get_header_size() -> i32 {
@@ -643,7 +732,7 @@ impl ReliableConnection {
 #[test]
 fn test_linked_list() {
     let mut ll: VecDeque<PacketData> = VecDeque::new();
-    let pd0 = PacketData{sequence: 0, time: 0.0f32, size: 128u32};
+    let pd0 = PacketData{sequence: 0, time: 0.0f32, size: 128usize};
     ll.insert_sorted(pd0, 128u32);
 }
 
