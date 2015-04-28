@@ -685,9 +685,9 @@ impl ReliableConnection {
 
     fn WriteHeader(&self, header: &mut [u8], sequence: u32, ack: u32, ack_bits: u32 )
     {
-        self.WriteInteger( header.slice(0,4), sequence );
-        self.WriteInteger( header.slice(4,8), ack );
-        self.WriteInteger( header.slice(8,12), ack_bits );
+        self.WriteInteger( &mut header[0..4], sequence );
+        self.WriteInteger( &mut header[4..8], ack );
+        self.WriteInteger( &mut header[8..12], ack_bits );
     }
 
     fn ReadInteger(&self, data: &mut[u8], value: & u32 )
@@ -701,9 +701,9 @@ impl ReliableConnection {
 
     fn ReadHeader(&self,header: Vec<u8>, sequence: &u32, ack: &u32, ack_bits: &u32 )
     {
-        &self.ReadInteger( &header.slice(0,4), sequence );
-        &self.ReadInteger( &header.slice(4,8), ack );
-        &self.ReadInteger( &header.slice(8,12), ack_bits );
+        &self.ReadInteger( (&header)[0..4], sequence );
+        &self.ReadInteger( (&header)[4..8], ack );
+        &self.ReadInteger( (&header)[8..12], ack_bits );
     }
 
     fn get_header_size() -> i32 {
