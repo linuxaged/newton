@@ -3,6 +3,8 @@
 // https://air.mozilla.org/dynamically-sized-typed-nick-cameron/
 // http://stackoverflow.com/questions/25740916/how-do-you-actually-use-dynamically-sized-types-in-rust
 #![feature(collections)]
+#![feature(convert)]
+#![allow(exceeding_bitshifts)]
 mod socket {
 
 use std::default::Default;
@@ -629,7 +631,7 @@ impl ReliableConnection {
         let seq = self.reliabilitySystem.GetLocalSequence();
         let ack = self.reliabilitySystem.GetRemoteSequence();
         let ack_bits = self.reliabilitySystem.GenerateAckBits();
-        self.WriteHeader( &packet, seq, ack, ack_bits );
+        self.WriteHeader( packet.as_mut_slice(), seq, ack, ack_bits );
 
         // memcpy( packet + header, data, size );
         unsafe {
@@ -656,10 +658,10 @@ impl ReliableConnection {
         if ( received_bytes <= header ) {
             return 0;
         }
-        let packet_sequence = 0u32;
-        let packet_ack = 0u32;
-        let packet_ack_bits = 0u32;
-        self.ReadHeader( packet, &packet_sequence, &packet_ack, &packet_ack_bits );
+        let mut packet_sequence = 0u32;
+        let mut packet_ack = 0u32;
+        let mut packet_ack_bits = 0u32;
+        self.ReadHeader( packet.as_slice(), &mut packet_sequence, &mut packet_ack, &mut packet_ack_bits );
         self.reliabilitySystem.PacketReceived( packet_sequence, received_bytes - header );
         self.reliabilitySystem.ProcessAck( packet_ack, packet_ack_bits );
 
@@ -670,7 +672,7 @@ impl ReliableConnection {
         return received_bytes - header;
     }
 
-    fn Update(&self, deltaTime: f32) {
+    fn Update(&mut self, deltaTime: f32) {
         self.update( deltaTime );
         self.reliabilitySystem.Update( deltaTime );
     }
@@ -690,7 +692,7 @@ impl ReliableConnection {
         self.WriteInteger( &mut header[8..12], ack_bits );
     }
 
-    fn ReadInteger(&self, data: &mut[u8], value: & u32 )
+    fn ReadInteger(&self, data: &[u8], value: &mut u32 )
     {
         *value = ( ((data[0] << 24) as u32) |
                   ((data[1] << 16) as u32) |
@@ -699,11 +701,11 @@ impl ReliableConnection {
                 );
     }
 
-    fn ReadHeader(&self,header: Vec<u8>, sequence: &u32, ack: &u32, ack_bits: &u32 )
+    fn ReadHeader(&self,header: &[u8], sequence: &mut u32, ack: &mut u32, ack_bits: &mut u32 )
     {
-        &self.ReadInteger( (&header)[0..4], sequence );
-        &self.ReadInteger( (&header)[4..8], ack );
-        &self.ReadInteger( (&header)[8..12], ack_bits );
+        &self.ReadInteger( & header[0..4], sequence );
+        &self.ReadInteger( & header[4..8], ack );
+        &self.ReadInteger( & header[8..12], ack_bits );
     }
 
     fn get_header_size() -> i32 {
