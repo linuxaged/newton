@@ -130,7 +130,7 @@ impl ReliabilitySystem {
         self.rtt_maximum = 1.0f32;
     }
 
-    fn PacketSent(&mut self, size: usize )
+    fn packet_sent(&mut self, size: usize )
     {
         if ( self.sentQueue.exists( self.local_sequence ) )
         {
@@ -154,7 +154,7 @@ impl ReliabilitySystem {
         }
     }
 
-    fn PacketReceived(&mut self, sequence: u32, size: usize )
+    fn packet_received(&mut self, sequence: u32, size: usize )
     {
         self.recv_packets += 1;
         if ( self.receivedQueue.exists( sequence ) ) {
@@ -170,22 +170,22 @@ impl ReliabilitySystem {
         }
     }
 
-    fn GenerateAckBits(&self) -> u32
+    pub fn generate_ack_bits(&self) -> u32
     {
-        return self.generate_ack_bits( self.GetRemoteSequence(), &self.receivedQueue, self.max_sequence );
+        return self._generate_ack_bits( self.get_remote_sequence(), &self.receivedQueue, self.max_sequence );
     }
 
-    fn ProcessAck(&mut self, ack: u32, ack_bits: u32 )
+    pub fn process_ack(&mut self, ack: u32, ack_bits: u32 )
     {
-        self.process_ack(ack, ack_bits);
+        self._process_ack(ack, ack_bits);
     }
 
-    fn Update(&mut self, deltaTime: f32 )
+    fn update(&mut self, deltaTime: f32 )
     {
         self.acks.clear();
-        self.AdvanceQueueTime( deltaTime );
-        self.UpdateQueues();
-        self.UpdateStats();
+        self.advance_queue_time( deltaTime );
+        self.update_queues();
+        self.update_stats();
 
         // Validate();
 
@@ -206,7 +206,7 @@ impl ReliabilitySystem {
         return (( s1 > s2 ) && ( s1 - s2 <= max_sequence / 2 )) || (( s2 > s1 ) && ( s2 - s1 > max_sequence / 2 ));
     }
 
-    fn generate_ack_bits(&self, ack: u32, received_queue: &VecDeque<PacketData> , max_sequence: u32) -> u32
+    fn _generate_ack_bits(&self, ack: u32, received_queue: &VecDeque<PacketData> , max_sequence: u32) -> u32
     {
         let mut ack_bits = 0u32;
         for itor in received_queue.iter() {
@@ -222,7 +222,7 @@ impl ReliabilitySystem {
         return ack_bits;
     }
 
-    fn process_ack(&mut self, ack: u32,  ack_bits: u32)
+    fn _process_ack(&mut self, ack: u32,  ack_bits: u32)
     {
         if ( self.pendingAckQueue.is_empty() ) {
             return;
@@ -262,62 +262,62 @@ impl ReliabilitySystem {
 
     // data accessors
 
-    fn GetLocalSequence(&self) -> u32
+    fn get_local_sequence(&self) -> u32
     {
         self.local_sequence
     }
 
-    fn GetRemoteSequence(&self) -> u32
+    fn get_remote_sequence(&self) -> u32
     {
         self.remote_sequence
     }
 
-    fn GetMaxSequence(&self) -> u32
+    fn get_max_sequence(&self) -> u32
     {
         self.max_sequence
     }
 
-    fn GetSentPackets(&self) -> u32
+    fn get_sent_packets(&self) -> u32
     {
         self.sent_packets
     }
 
-    fn GetReceivedPackets(&self) -> u32
+    fn get_Received_Packets(&self) -> u32
     {
         self.recv_packets
     }
 
-    fn GetLostPackets(&self) -> u32
+    fn get_lost_packets(&self) -> u32
     {
         self.lost_packets
     }
 
-    fn GetAckedPackets(&self) -> u32
+    fn get_acked_packets(&self) -> u32
     {
         self.acked_packets
     }
 
-    fn GetSentBandwidth(&self) -> f32
+    fn get_sent_bandwidth(&self) -> f32
     {
         self.sent_bandwidth
     }
 
-    fn GetAckedBandwidth(&self) -> f32
+    fn get_acked_bandwidth(&self) -> f32
     {
         self.acked_bandwidth
     }
 
-    fn GetRoundTripTime(&self) -> f32
+    fn get_round_triptime(&self) -> f32
     {
         self.rtt
     }
 
-    fn GetHeaderSize() -> i32
+    fn get_header_size() -> i32
     {
         12
     }
 
-    fn AdvanceQueueTime(&mut self, deltaTime: f32 )
+    fn advance_queue_time(&mut self, deltaTime: f32 )
     {
         for itor in self.sentQueue.iter_mut() {
             itor.time += deltaTime;
@@ -336,7 +336,7 @@ impl ReliabilitySystem {
         }
     }
 
-    fn UpdateQueues(&mut self)
+    fn update_queues(&mut self)
     {
         let epsilon = 0.001f32;
 
@@ -365,7 +365,7 @@ impl ReliabilitySystem {
         }
     }
 
-    fn UpdateStats(&mut self)
+    fn update_stats(&mut self)
     {
         let mut sent_bytes_per_second = 0;
         for itor in self.sentQueue.iter() {
@@ -523,7 +523,7 @@ impl ReliableConnection {
         self.mode
     }
 
-    pub fn update(&mut self, deltaTime: f32)
+    fn _update(&mut self, deltaTime: f32)
     {
         assert!( self.running );
         self.timeoutAccumulator += deltaTime;
@@ -548,7 +548,7 @@ impl ReliableConnection {
         }
     }
     // 添加4字节的 协议ID 后发送
-    pub fn send_packet(&self, data: &[u8], size: usize) -> bool
+    fn _send_packet(&self, data: &[u8], size: usize) -> bool
     {
         assert!( self.running );
 
@@ -570,7 +570,7 @@ impl ReliableConnection {
         }
     }
 
-    pub fn receive_packet(&mut self, data: &[u8],  size: usize) -> usize
+    fn _receive_packet(&mut self, data: &[u8],  size: usize) -> usize
     {
         assert!(self.running);
         // uchar_t packet[size + 4];
@@ -624,34 +624,34 @@ impl ReliableConnection {
     }
 
     // overriden functions from "Connection"
-    fn SendPacket(&mut self, data: &mut[u8],  size: usize ) -> bool
+    fn send_packet(&mut self, data: &mut[u8],  size: usize ) -> bool
     {
         let header = 12usize;
         let mut packet: Vec<u8> = Vec::with_capacity(header + size);
-        let seq = self.reliabilitySystem.GetLocalSequence();
-        let ack = self.reliabilitySystem.GetRemoteSequence();
-        let ack_bits = self.reliabilitySystem.GenerateAckBits();
-        self.WriteHeader( packet.as_mut_slice(), seq, ack, ack_bits );
+        let seq = self.reliabilitySystem.get_local_sequence();
+        let ack = self.reliabilitySystem.get_remote_sequence();
+        let ack_bits = self.reliabilitySystem.generate_ack_bits();
+        self.write_header( packet.as_mut_slice(), seq, ack, ack_bits );
 
         // memcpy( packet + header, data, size );
         unsafe {
             ptr::copy_nonoverlapping(data.as_ptr(), &mut packet[header], size);
         }
-        if ( !self.send_packet( &packet[0..], size + header ) ) {
+        if ( !self._send_packet( &packet[0..], size + header ) ) {
             return false;
         }
-        self.reliabilitySystem.PacketSent( size );
+        self.reliabilitySystem.packet_sent( size );
         return true;
     }
 
-    fn ReceivePacket(&mut self, data: &[u8], size: usize ) -> usize
+    fn receive_packet(&mut self, data: &[u8], size: usize ) -> usize
     {
         let header = 12usize;
         if ( size <= header ) {
             return 0;
         }
         let mut packet: Vec<u8> = Vec::with_capacity(header + size);
-        let received_bytes = self.receive_packet( &packet[0..], size + header );
+        let received_bytes = self._receive_packet( &packet[0..], size + header );
         if ( received_bytes == 0 ) {
             return 0;
         }
@@ -661,9 +661,9 @@ impl ReliableConnection {
         let mut packet_sequence = 0u32;
         let mut packet_ack = 0u32;
         let mut packet_ack_bits = 0u32;
-        self.ReadHeader( packet.as_slice(), &mut packet_sequence, &mut packet_ack, &mut packet_ack_bits );
-        self.reliabilitySystem.PacketReceived( packet_sequence, received_bytes - header );
-        self.reliabilitySystem.ProcessAck( packet_ack, packet_ack_bits );
+        self.read_header( packet.as_slice(), &mut packet_sequence, &mut packet_ack, &mut packet_ack_bits );
+        self.reliabilitySystem.packet_received( packet_sequence, received_bytes - header );
+        self.reliabilitySystem.process_ack( packet_ack, packet_ack_bits );
 
         // memcpy( data, packet + header, received_bytes - header );
         unsafe {
@@ -672,12 +672,12 @@ impl ReliableConnection {
         return received_bytes - header;
     }
 
-    fn Update(&mut self, deltaTime: f32) {
-        self.update( deltaTime );
-        self.reliabilitySystem.Update( deltaTime );
+    fn update(&mut self, deltaTime: f32) {
+        self._update( deltaTime );
+        self.reliabilitySystem.update( deltaTime );
     }
 
-    fn WriteInteger(&self, data: &mut [u8], value: u32)
+    fn write_integer(&self, data: &mut [u8], value: u32)
     {
         data[0] = ( value >> 24 ) as u8;
         data[1] = ( ( value >> 16 ) & 0xFF ) as u8;
@@ -685,14 +685,14 @@ impl ReliableConnection {
         data[3] = ( value & 0xFF ) as u8;
     }
 
-    fn WriteHeader(&self, header: &mut [u8], sequence: u32, ack: u32, ack_bits: u32 )
+    fn write_header(&self, header: &mut [u8], sequence: u32, ack: u32, ack_bits: u32 )
     {
-        self.WriteInteger( &mut header[0..4], sequence );
-        self.WriteInteger( &mut header[4..8], ack );
-        self.WriteInteger( &mut header[8..12], ack_bits );
+        self.write_integer( &mut header[0..4], sequence );
+        self.write_integer( &mut header[4..8], ack );
+        self.write_integer( &mut header[8..12], ack_bits );
     }
 
-    fn ReadInteger(&self, data: &[u8], value: &mut u32 )
+    fn read_integer(&self, data: &[u8], value: &mut u32 )
     {
         *value = ( ((data[0] << 24) as u32) |
                   ((data[1] << 16) as u32) |
@@ -701,11 +701,11 @@ impl ReliableConnection {
                 );
     }
 
-    fn ReadHeader(&self,header: &[u8], sequence: &mut u32, ack: &mut u32, ack_bits: &mut u32 )
+    fn read_header(&self,header: &[u8], sequence: &mut u32, ack: &mut u32, ack_bits: &mut u32 )
     {
-        &self.ReadInteger( & header[0..4], sequence );
-        &self.ReadInteger( & header[4..8], ack );
-        &self.ReadInteger( & header[8..12], ack_bits );
+        &self.read_integer( & header[0..4], sequence );
+        &self.read_integer( & header[4..8], ack );
+        &self.read_integer( & header[8..12], ack_bits );
     }
 
     fn get_header_size() -> i32 {
