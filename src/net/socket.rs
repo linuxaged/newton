@@ -30,6 +30,7 @@ impl Default for PacketData {
 trait PacketQueue {
     fn exists(&self, mut sequence: u32) -> bool;
     fn insert_sorted(&mut self, p: PacketData,  max_sequence: u32);
+    fn verify_sorted(&self, max_sequence: u32);
 }
 
 #[inline]
@@ -82,6 +83,17 @@ impl PacketQueue for VecDeque<PacketData> {
                         break;
                     }
                 }
+            }
+        }
+    }
+
+    fn verify_sorted(&self, max_sequence: u32 )
+    {
+        // todo, compare last one with second last one
+        for i in 0..self.len() {
+            assert!( self.get(i).unwrap().sequence <= max_sequence );
+            if i != self.len() {
+                assert!( sequence_more_recent( self.get(i+1).unwrap().sequence, self.get(i).unwrap().sequence, max_sequence ) );
             }
         }
     }
@@ -573,7 +585,7 @@ impl ReliableConnection {
     fn _receive_packet(&mut self, data: &[u8],  size: usize) -> usize
     {
         assert!(self.running);
-        // uchar_t packet[size + 4];
+
         let mut packet: Vec<u8> = Vec::with_capacity(size + 4);
 
         let mut bytes_read = 0usize;
@@ -593,9 +605,9 @@ impl ReliableConnection {
             return 0;
         }
         if ( packet[0] != ( self.protocolId >> 24 ) as u8 ||
-                packet[1] != ( ( self.protocolId >> 16 ) & 0xFF ) as u8 ||
-                packet[2] != ( ( self.protocolId >> 8 ) & 0xFF ) as u8||
-                packet[3] != ( self.protocolId & 0xFF ) as u8) {
+             packet[1] != ((self.protocolId >> 16 ) & 0xFF ) as u8 ||
+             packet[2] != ((self.protocolId >> 8 ) & 0xFF ) as u8||
+             packet[3] != ( self.protocolId & 0xFF ) as u8) {
             return 0;
         }
 
@@ -732,7 +744,7 @@ impl ReliableConnection {
 }
 
 #[test]
-fn test_linked_list() {
+fn test_packagequeue() {
     let mut ll: VecDeque<PacketData> = VecDeque::new();
     let pd0 = PacketData{sequence: 0, time: 0.0f32, size: 128usize};
     ll.insert_sorted(pd0, 128u32);
