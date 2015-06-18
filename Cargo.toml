@@ -13,6 +13,9 @@ git = "https://github.com/tomaka/glutin"
 [dependencies.gl]
 git = "https://github.com/bjz/gl-rs"
 
+[dependencies.serde]
+git = "https://github.com/serde-rs/serde"
+
 [[example]]
 name = "cocos"
 path = "example/cocos/main.rs"
