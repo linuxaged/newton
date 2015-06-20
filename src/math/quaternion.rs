@@ -1,5 +1,5 @@
 use std::ops::Mul;
-use std::num::Float;
+use std::f32;
 
 pub struct Quaternion {
     pub r: f32,
@@ -19,7 +19,7 @@ impl Quaternion {
             self.r = 1.0f32;
             return;
         }
-        d = d.rsqrt();
+        d = d.sqrt();
         self.r *= d;
         self.i *= d;
         self.j *= d;

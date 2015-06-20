@@ -27,7 +27,7 @@ name = "cgl"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "gleam 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gleam 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -142,7 +142,7 @@ dependencies = [
 
 [[package]]
 name = "gleam"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "gl_common 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -276,7 +276,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "serde"
 version = "0.4.1"
-source = "git+https://github.com/serde-rs/serde#ab3e40ca45b13a75aa741eaa591b59146aaa8a50"
+source = "git+https://github.com/serde-rs/serde#ed5b4d73190c95b16cc4982d7085e27e22454baf"
 dependencies = [
  "num 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

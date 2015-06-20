@@ -5,14 +5,29 @@ extern crate serde;
 use serde::json::{self, Value};
 
 fn main() {
-    let data: Value = json::from_str("{\"foo\": 13, \"bar\": \"baz\"}").unwrap();
+    let data: Value = json::from_str(
+r#"{
+    "FirstName": "John",
+    "LastName": "Doe",
+    "Age": 43,
+    "Address": {
+        "Street": "Downing Street 10",
+        "City": "London",
+        "Country": "Great Britain"
+    },
+    "PhoneNumbers": [
+        "+44 1234567",
+        "+44 2345678"
+    ]
+}"#
+        ).unwrap();
     println!("data: {:?}", data);
     // data: {"bar":"baz","foo":13}
     println!("object? {}", data.is_object());
     // object? true
 
     let obj = data.as_object().unwrap();
-    let foo = obj.get("foo").unwrap();
+    let foo = obj.get("Age").unwrap();
 
     println!("array? {:?}", foo.as_array());
     // array? None
