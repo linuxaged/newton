@@ -20,11 +20,18 @@ fn main() {
     let meshes = obj.get("meshes").unwrap();
     let mesh_array = meshes.as_array().unwrap();
     let mesh = mesh_array[0].as_object().unwrap();
+    // get vertex
     let vertices = mesh.get("vertices").unwrap();
     let vertex_array = vertices.as_array();
+    // get vertex index
+    let parts = mesh.get("parts").unwrap();
+    let part_array = parts.as_array().unwrap();
+    let part = part_array[0].as_object().unwrap();
+    let indices = part.get("indices").unwrap();
+    let index_array = indices.as_array().unwrap();
 
-    println!("array? {:?}", vertex_array);
-
+    println!("vertex? {:?}", vertex_array);
+    println!("index? {:?}", index_array);
     // // array? None
     // println!("u64? {:?}", foo.as_u64());
     // // u64? Some(13u64)
