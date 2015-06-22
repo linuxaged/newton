@@ -1,4 +1,3 @@
-extern crate gl;
 use math;
 
 // #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -69,8 +68,8 @@ struct AABB {
 }
 
 struct MeshVertexAttribs {
-    size: gl::types::GLint,
-    t: gl::types::GLenum,
+    // size: gl::types::GLint,
+    // t: gl::types::GLenum,
     vertexAttrib: i32,
     attribSizeBytes: i32,
 }
