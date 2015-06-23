@@ -42,7 +42,7 @@ fn main() {
 
     #[derive(Copy, Clone)]
     struct Vertex {
-        position: [f32; 2],
+        position: [f64; 3],
     }
 
     implement_vertex!(Vertex, position);
@@ -52,8 +52,10 @@ fn main() {
     let vertex3 = Vertex { position: [ 0.5, -0.25] };
     let shape = vec![vertex1, vertex2, vertex3];
 
-    let vertex_buffer = glium::VertexBuffer::new(&display, shape);
+    // let vertex_buffer = glium::VertexBuffer::new(&display, shape);
+    let vertex_buffer = glium::VertexBuffer::new(&display, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
+    // let indices = glium::index::IndexBuffer::new(&index_array , glium::index::IndexType::U32, glium::index::PrimitiveType::TrianglesList);
 
     let vertex_shader_src = r#"
         #version 140
