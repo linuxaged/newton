@@ -20,42 +20,36 @@ fn main() {
     let data: Value = json::from_str(&s).unwrap();
 
 
-    let obj = data.as_object().unwrap();
-    let meshes = obj.get("meshes").unwrap();
+    // let obj = data.as_object().unwrap();
+    let meshes = data.find("meshes").unwrap();
     let mesh_array = meshes.as_array().unwrap();
     let mesh = mesh_array[0].as_object().unwrap();
-    // get vertex
-    let vertices = mesh.get("vertices").unwrap();
-    let vertex_array = vertices.as_array().unwrap();
+
     // get vertex index
     let parts = mesh.get("parts").unwrap();
     let part_array = parts.as_array().unwrap();
     let part = part_array[0].as_object().unwrap();
-    let indices = part.get("indices").unwrap();
-    let index_array = indices.as_array().unwrap();
+    let indices = (json::from_value(part.get("indices").unwrap().clone()) ).unwrap();
+    // get vertex
+    #[derive(Copy, Clone)]
+    struct Vertex {
+        position:   [f64; 3],
+        normal:     [f64; 3],
+        texcood:    [f64; 2],
+        blendweight:[f64; 4],
+        blendindex: [f64; 4]
+    }
 
-    println!("vertex len = {}", vertex_array.len() );
-    println!("index len = {}", index_array.len() );
+    implement_vertex!(Vertex, position, normal, texcood, blendweight, blendindex);
+    let mut vertices:Vec<Vertex> = Vec::with_capacity(512);
 
+    vertices = (json::from_value(mesh.get("vertices").unwrap().clone()) ).unwrap();
 
     let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
 
-    #[derive(Copy, Clone)]
-    struct Vertex {
-        position: [f64; 3],
-    }
-
-    implement_vertex!(Vertex, position);
-
-    let vertex1 = Vertex { position: [-0.5, -0.5] };
-    let vertex2 = Vertex { position: [ 0.0,  0.5] };
-    let vertex3 = Vertex { position: [ 0.5, -0.25] };
-    let shape = vec![vertex1, vertex2, vertex3];
-
-    // let vertex_buffer = glium::VertexBuffer::new(&display, shape);
-    let vertex_buffer = glium::VertexBuffer::new(&display, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
-    let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
-    // let indices = glium::index::IndexBuffer::new(&index_array , glium::index::IndexType::U32, glium::index::PrimitiveType::TrianglesList);
+    let vertex_buffer = glium::VertexBuffer::new(&display, vertices);
+    // let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
+    let indices = glium::index::IndexBuffer::new(&indices , glium::index::IndexType::U32, glium::index::PrimitiveType::TrianglesList);
 
     let vertex_shader_src = r#"
         #version 140
