@@ -1,6 +1,6 @@
 #![feature(libc, convert)]
-//#![feature(custom_derive, plugin)]
-//#![plugin(serde_macros)]
+#![feature(custom_derive, plugin)]
+#![plugin(serde_macros)]
 extern crate serde;
 use serde::json::{self, Value};
 
@@ -29,9 +29,9 @@ fn main() {
     let parts = mesh.get("parts").unwrap();
     let part_array = parts.as_array().unwrap();
     let part = part_array[0].as_object().unwrap();
-    let indices = (json::from_value(part.get("indices").unwrap().clone()) ).unwrap();
+    let indices:Vec<u32> = (json::from_value(part.get("indices").unwrap().clone()) ).unwrap();
     // get vertex
-    #[derive(Copy, Clone)]
+    #[derive(Copy, Clone, Serialize, Deserialize)]
     struct Vertex {
         position:   [f64; 3],
         normal:     [f64; 3],
@@ -48,8 +48,8 @@ fn main() {
     let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
 
     let vertex_buffer = glium::VertexBuffer::new(&display, vertices);
-    // let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
-    let indices = glium::index::IndexBuffer::new(&indices , glium::index::IndexType::U32, glium::index::PrimitiveType::TrianglesList);
+    let index_buffer = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList,
+                                          indices);
 
     let vertex_shader_src = r#"
         #version 140
@@ -96,7 +96,7 @@ fn main() {
             ]
         };
 
-        target.draw(&vertex_buffer, &indices, &program, &uniforms,
+        target.draw(&vertex_buffer, &index_buffer, &program, &uniforms,
                     &Default::default()).unwrap();
         target.finish().unwrap();
 

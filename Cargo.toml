@@ -10,6 +10,9 @@ path = "src/lib.rs"
 [dependencies.serde]
 git = "https://github.com/serde-rs/serde"
 
+[dependencies.serde_macros]
+git = "https://github.com/serde-rs/serde"
+
 [dependencies.glium]
 git = "https://github.com/tomaka/glium"
 
