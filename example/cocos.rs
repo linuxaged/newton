@@ -13,7 +13,7 @@ extern crate glium;
 use glium::{DisplayBuild, Surface};
 
 fn main() {
-    let mut f = File::open("./example/cocos/orc.c3t").unwrap(); // relative path to target
+    let mut f = File::open("./example/cocos/orc.c3t").unwrap();
     let mut s = String::new();
     f.read_to_string(&mut s);
 
