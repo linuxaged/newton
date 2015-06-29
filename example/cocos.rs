@@ -45,66 +45,66 @@ fn main() {
 
     vertices = (json::from_value(mesh.get("vertices").unwrap().clone()) ).unwrap();
 
-    let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
+    // let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
 
-    let vertex_buffer = glium::VertexBuffer::new(&display, vertices);
-    let index_buffer = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList,
-                                          indices);
+    // let vertex_buffer = glium::VertexBuffer::new(&display, vertices);
+    // let index_buffer = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList,
+    //                                       indices);
 
-    let vertex_shader_src = r#"
-        #version 140
+    // let vertex_shader_src = r#"
+    //     #version 140
 
-        in vec2 position;
+    //     in vec2 position;
 
-        uniform mat4 matrix;
+    //     uniform mat4 matrix;
 
-        void main() {
-            gl_Position = matrix * vec4(position, 0.0, 1.0);
-        }
-    "#;
+    //     void main() {
+    //         gl_Position = matrix * vec4(position, 0.0, 1.0);
+    //     }
+    // "#;
 
-    let fragment_shader_src = r#"
-        #version 140
+    // let fragment_shader_src = r#"
+    //     #version 140
 
-        out vec4 color;
+    //     out vec4 color;
 
-        void main() {
-            color = vec4(1.0, 0.0, 0.0, 1.0);
-        }
-    "#;
+    //     void main() {
+    //         color = vec4(1.0, 0.0, 0.0, 1.0);
+    //     }
+    // "#;
 
-    let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
+    // let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
 
-    let mut t = -0.5;
+    // let mut t = -0.5;
 
-    loop {
-        // we update `t`
-        t += 0.0002;
-        if t > 0.5 {
-            t = -0.5;
-        }
+    // loop {
+    //     // we update `t`
+    //     t += 0.0002;
+    //     if t > 0.5 {
+    //         t = -0.5;
+    //     }
 
-        let mut target = display.draw();
-        target.clear_color(0.0, 0.0, 1.0, 1.0);
+    //     let mut target = display.draw();
+    //     target.clear_color(0.0, 0.0, 1.0, 1.0);
 
-        let uniforms = uniform! {
-            matrix: [
-                [1.0, 0.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0, 0.0],
-                [ t , 0.0, 0.0, 1.0],
-            ]
-        };
+    //     let uniforms = uniform! {
+    //         matrix: [
+    //             [1.0, 0.0, 0.0, 0.0],
+    //             [0.0, 1.0, 0.0, 0.0],
+    //             [0.0, 0.0, 1.0, 0.0],
+    //             [ t , 0.0, 0.0, 1.0],
+    //         ]
+    //     };
 
-        target.draw(&vertex_buffer, &index_buffer, &program, &uniforms,
-                    &Default::default()).unwrap();
-        target.finish().unwrap();
+    //     target.draw(&vertex_buffer, &index_buffer, &program, &uniforms,
+    //                 &Default::default()).unwrap();
+    //     target.finish().unwrap();
 
-        for ev in display.poll_events() {
-            match ev {
-                glium::glutin::Event::Closed => return,
-                _ => ()
-            }
-        }
-    }
+    //     for ev in display.poll_events() {
+    //         match ev {
+    //             glium::glutin::Event::Closed => return,
+    //             _ => ()
+    //         }
+    //     }
+    // }
 }
