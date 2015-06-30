@@ -31,7 +31,7 @@ fn main() {
     let part = part_array[0].as_object().unwrap();
     let indices:Vec<u32> = (json::from_value(part.get("indices").unwrap().clone()) ).unwrap();
     // get vertex
-    #[derive(Copy, Clone, Serialize, Deserialize)]
+    #[derive(Copy, Clone, Serialize, Deserialize, Display)]
     struct Vertex {
         position:   [f64; 3],
         normal:     [f64; 3],
@@ -41,9 +41,8 @@ fn main() {
     }
 
     implement_vertex!(Vertex, position, normal, texcood, blendweight, blendindex);
-    let mut vertices:Vec<Vertex> = Vec::with_capacity(512);
 
-    vertices = (json::from_value(mesh.get("vertices").unwrap().clone()) ).unwrap();
+    let vertices:Vec<Vertex> = (json::from_value(mesh.get("vertices").unwrap().clone()) ).unwrap();
 
     // let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
 
