@@ -1,5 +1,4 @@
-#![feature(libc, convert)]
-#![feature(custom_derive, plugin)]
+#![feature(libc, convert, custom_derive, plugin, step_by)]
 #![plugin(serde_macros)]
 extern crate serde;
 use serde::json::{self, Value};
@@ -42,68 +41,81 @@ fn main() {
 
     implement_vertex!(Vertex, position, normal, texcood, blendweight, blendindex);
 
-    let vertices:Vec<Vertex> = (json::from_value(mesh.get("vertices").unwrap().clone()) ).unwrap();
+    let vertices:Vec<f64> = (json::from_value(mesh.get("vertices").unwrap().clone()) ).unwrap();
 
-    // let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
+    let mut vertex_array:Vec<Vertex> = Vec::<Vertex>::new();
+    
+    for i in (0..vertices.len()).step_by(16) {
+        let vertex = Vertex{
+            position:[vertices[i+0], vertices[i+1],vertices[i+2]],
+            normal:[vertices[i+3],vertices[i+4],vertices[i+5]],
+            texcood:[vertices[i+6],vertices[i+7]],
+            blendweight:[vertices[i+8], vertices[i+9],vertices[i+10],vertices[i+11]],
+            blendindex:[vertices[i+12], vertices[i+13],vertices[i+14],vertices[i+15]]
+        };
+        vertex_array.push(vertex);
+    }
 
-    // let vertex_buffer = glium::VertexBuffer::new(&display, vertices);
-    // let index_buffer = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList,
-    //                                       indices);
+    let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
 
-    // let vertex_shader_src = r#"
-    //     #version 140
+    let vertex_buffer = glium::VertexBuffer::new(&display, vertex_array);
+    let index_buffer = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList,
+                                          indices);
 
-    //     in vec2 position;
+    let vertex_shader_src = r#"
+        #version 140
 
-    //     uniform mat4 matrix;
+        in vec3 position;
 
-    //     void main() {
-    //         gl_Position = matrix * vec4(position, 0.0, 1.0);
-    //     }
-    // "#;
+        uniform mat4 matrix;
 
-    // let fragment_shader_src = r#"
-    //     #version 140
+        void main() {
+            gl_Position = matrix * vec4(position, 1.0);
+        }
+    "#;
 
-    //     out vec4 color;
+    let fragment_shader_src = r#"
+        #version 140
 
-    //     void main() {
-    //         color = vec4(1.0, 0.0, 0.0, 1.0);
-    //     }
-    // "#;
+        out vec4 color;
 
-    // let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
+        void main() {
+            color = vec4(1.0, 0.0, 0.0, 1.0);
+        }
+    "#;
 
-    // let mut t = -0.5;
+    let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
 
-    // loop {
-    //     // we update `t`
-    //     t += 0.0002;
-    //     if t > 0.5 {
-    //         t = -0.5;
-    //     }
+    let mut t = -0.5;
 
-    //     let mut target = display.draw();
-    //     target.clear_color(0.0, 0.0, 1.0, 1.0);
+    loop {
+        // we update `t`
+        t += 0.0002;
+        if t > 0.5 {
+            t = -0.5;
+        }
 
-    //     let uniforms = uniform! {
-    //         matrix: [
-    //             [1.0, 0.0, 0.0, 0.0],
-    //             [0.0, 1.0, 0.0, 0.0],
-    //             [0.0, 0.0, 1.0, 0.0],
-    //             [ t , 0.0, 0.0, 1.0],
-    //         ]
-    //     };
+        let mut target = display.draw();
+        target.clear_color(0.0, 0.0, 1.0, 1.0);
 
-    //     target.draw(&vertex_buffer, &index_buffer, &program, &uniforms,
-    //                 &Default::default()).unwrap();
-    //     target.finish().unwrap();
+        let uniforms = uniform! {
+            matrix: [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [ t , 0.0, 0.0, 1.0],
+            ]
+        };
 
-    //     for ev in display.poll_events() {
-    //         match ev {
-    //             glium::glutin::Event::Closed => return,
-    //             _ => ()
-    //         }
-    //     }
-    // }
+        target.draw(&vertex_buffer, &index_buffer, &program, &uniforms,
+                    &Default::default()).unwrap();
+        target.finish().unwrap();
+
+        for ev in display.poll_events() {
+            match ev {
+                glium::glutin::Event::Closed => return,
+                _ => ()
+            }
+        }
+    }
 }
