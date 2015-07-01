@@ -3,12 +3,14 @@
 extern crate serde;
 use serde::json::{self, Value};
 
-// file io
 use std::io::prelude::*;
 use std::fs::File;
 
 extern crate cgmath;
 use cgmath::FixedArray;
+
+extern crate image;
+use std::io::Cursor;
 
 #[macro_use]
 extern crate glium;
@@ -21,8 +23,6 @@ fn main() {
 
     let data: Value = json::from_str(&s).unwrap();
 
-
-    // let obj = data.as_object().unwrap();
     let meshes = data.find("meshes").unwrap();
     let mesh_array = meshes.as_array().unwrap();
     let mesh = mesh_array[0].as_object().unwrap();
@@ -32,17 +32,17 @@ fn main() {
     let part_array = parts.as_array().unwrap();
     let part = part_array[0].as_object().unwrap();
     let indices:Vec<u32> = (json::from_value(part.get("indices").unwrap().clone()) ).unwrap();
-    // get vertex
+
     #[derive(Copy, Clone, Serialize, Deserialize, Display)]
     struct Vertex {
         position:   [f64; 3],
         normal:     [f64; 3],
-        texcood:    [f64; 2],
+        texcoord:   [f64; 2],
         blendweight:[f64; 4],
         blendindex: [f64; 4]
     }
 
-    implement_vertex!(Vertex, position, normal, texcood, blendweight, blendindex);
+    implement_vertex!(Vertex, position, normal, texcoord, blendweight, blendindex);
 
     let vertices:Vec<f64> = (json::from_value(mesh.get("vertices").unwrap().clone()) ).unwrap();
 
@@ -52,14 +52,21 @@ fn main() {
         let vertex = Vertex{
             position:[vertices[i+0], vertices[i+1],vertices[i+2]],
             normal:[vertices[i+3],vertices[i+4],vertices[i+5]],
-            texcood:[vertices[i+6],vertices[i+7]],
+            texcoord:[vertices[i+6],vertices[i+7]],
             blendweight:[vertices[i+8], vertices[i+9],vertices[i+10],vertices[i+11]],
             blendindex:[vertices[i+12], vertices[i+13],vertices[i+14],vertices[i+15]]
         };
         vertex_array.push(vertex);
     }
 
+    
+
     let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
+
+    // load texture
+    let image = image::load(Cursor::new(&include_bytes!("./cocos/monguger.tga")[..]),
+                            image::ImageFormat::TGA).unwrap();
+    let texture = glium::texture::Texture2d::new(&display, image);
 
     let vertex_buffer = glium::VertexBuffer::new(&display, vertex_array);
     let index_buffer = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList,
@@ -69,12 +76,15 @@ fn main() {
         #version 140
 
         in vec3 position;
+        in vec2 texcoord;
+        out vec2 v_tex_coords;
 
         uniform mat4 perspective_matrix;
         uniform mat4 view_matrix;
         uniform mat4 model_matrix;
 
         void main() {
+            v_tex_coords = texcoord;
             gl_Position = perspective_matrix * view_matrix * model_matrix * vec4(position, 1.0);
         }
     "#;
@@ -82,10 +92,13 @@ fn main() {
     let fragment_shader_src = r#"
         #version 140
 
+        in vec2 v_tex_coords;
         out vec4 color;
 
+        uniform sampler2D tex;
+
         void main() {
-            color;
+            color = texture(tex, v_tex_coords);
         }
     "#;
 
@@ -93,7 +106,7 @@ fn main() {
 
     let perspective_matrix: cgmath::Matrix4<f32> = cgmath::perspective(cgmath::deg(45.0), 1.333, 0.0001, 100.0);
     let fixed_perspective_matrix = perspective_matrix.as_fixed();
-    let view_eye: cgmath::Point3<f32> = cgmath::Point3::new(0.0, 20.0, -20.0);
+    let view_eye: cgmath::Point3<f32> = cgmath::Point3::new(0.0, 40.0, -5.0);
     let view_center: cgmath::Point3<f32> = cgmath::Point3::new(0.0, 0.0, 0.0);
     let view_up: cgmath::Vector3<f32> = cgmath::Vector3::new(0.0, 1.0, 0.0);
     let view_matrix: cgmath::Matrix4<f32> = cgmath::Matrix4::look_at(&view_eye, &view_center, &view_up);
@@ -101,21 +114,15 @@ fn main() {
     let model_matrix: cgmath::Matrix4<f32> = cgmath::Matrix4::identity();
     let fixed_model_matrix = model_matrix.as_fixed();
 
-    let mut t = -0.5;
     loop {
-        // we update `t`
-        t += 0.0002;
-        if t > 0.5 {
-            t = -0.5;
-        }
-
         let mut target = display.draw();
         target.clear_color(1.0, 1.0, 1.0, 0.0);
 
         let uniforms = uniform! {
             perspective_matrix: *fixed_perspective_matrix,
             view_matrix: *fixed_view_matrix,
-            model_matrix: *fixed_model_matrix
+            model_matrix: *fixed_model_matrix,
+            tex: &texture
         };
 
         target.draw(&vertex_buffer, &index_buffer, &program, &uniforms,
