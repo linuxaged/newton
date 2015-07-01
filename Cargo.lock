@@ -2,6 +2,7 @@
 name = "newton"
 version = "0.0.1"
 dependencies = [
+ "cgmath 0.2.0 (git+https://github.com/bjz/cgmath-rs)",
  "glium 0.6.1 (git+https://github.com/tomaka/glium)",
  "serde 0.4.1 (git+https://github.com/serde-rs/serde)",
  "serde_macros 0.4.1 (git+https://github.com/serde-rs/serde)",
@@ -39,6 +40,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "gleam 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "cgmath"
+version = "0.2.0"
+source = "git+https://github.com/bjz/cgmath-rs#aebe5fd9bfb2daa468754a19a1eac02aa8f959e8"
+dependencies = [
+ "num 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

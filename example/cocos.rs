@@ -7,6 +7,9 @@ use serde::json::{self, Value};
 use std::io::prelude::*;
 use std::fs::File;
 
+extern crate cgmath;
+use cgmath::FixedArray;
+
 #[macro_use]
 extern crate glium;
 use glium::{DisplayBuild, Surface};
@@ -67,12 +70,12 @@ fn main() {
 
         in vec3 position;
 
-        uniform mat4 projection;
-        uniform mat4 view;
-        uniform mat4 model;
+        uniform mat4 perspective_matrix;
+        uniform mat4 view_matrix;
+        uniform mat4 model_matrix;
 
         void main() {
-            gl_Position = projection * view * model * vec4(position, 1.0);
+            gl_Position = perspective_matrix * view_matrix * model_matrix * vec4(position, 1.0);
         }
     "#;
 
@@ -82,14 +85,23 @@ fn main() {
         out vec4 color;
 
         void main() {
-            color = vec4(1.0, 0.0, 0.0, 1.0);
+            color;
         }
     "#;
 
     let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
 
-    let mut t = -0.5;
+    let perspective_matrix: cgmath::Matrix4<f32> = cgmath::perspective(cgmath::deg(45.0), 1.333, 0.0001, 100.0);
+    let fixed_perspective_matrix = perspective_matrix.as_fixed();
+    let view_eye: cgmath::Point3<f32> = cgmath::Point3::new(0.0, 20.0, -20.0);
+    let view_center: cgmath::Point3<f32> = cgmath::Point3::new(0.0, 0.0, 0.0);
+    let view_up: cgmath::Vector3<f32> = cgmath::Vector3::new(0.0, 1.0, 0.0);
+    let view_matrix: cgmath::Matrix4<f32> = cgmath::Matrix4::look_at(&view_eye, &view_center, &view_up);
+    let fixed_view_matrix = view_matrix.as_fixed();
+    let model_matrix: cgmath::Matrix4<f32> = cgmath::Matrix4::identity();
+    let fixed_model_matrix = model_matrix.as_fixed();
 
+    let mut t = -0.5;
     loop {
         // we update `t`
         t += 0.0002;
@@ -101,12 +113,9 @@ fn main() {
         target.clear_color(1.0, 1.0, 1.0, 0.0);
 
         let uniforms = uniform! {
-            matrix: [
-                [1.0, 0.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0, 0.0],
-                [ t , 0.0, 0.0, 1.0],
-            ]
+            perspective_matrix: *fixed_perspective_matrix,
+            view_matrix: *fixed_view_matrix,
+            model_matrix: *fixed_model_matrix
         };
 
         target.draw(&vertex_buffer, &index_buffer, &program, &uniforms,
