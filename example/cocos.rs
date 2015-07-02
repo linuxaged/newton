@@ -1,13 +1,20 @@
 extern crate cgmath;
 use cgmath::FixedArray;
+use image;
+use cocos::c3t;
 
 fn main() {
+    let c3t = C3T::new("./cocos/orc.c3t");
 
     let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
 
-    let vertex_buffer = glium::VertexBuffer::new(&display, vertex_array);
+    let vertex_buffer = glium::VertexBuffer::new(&display, c3t.vertices);
     let index_buffer = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList,
-                                          indices);
+                                          c3t.indices);
+    // load texture
+    let image = image::load(Cursor::new(&include_bytes!("./cocos/monguger.tga")[..]),
+                            image::ImageFormat::TGA).unwrap();
+    let texture = glium::texture::Texture2d::new(&display, image);
 
     let vertex_shader_src = r#"
         #version 140

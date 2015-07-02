@@ -7,8 +7,6 @@ use glium;
 use glium::{DisplayBuild, Surface};
 use std::io::Cursor;
 
-use image;
-
 #[derive(Copy, Clone, Serialize, Deserialize, Display)]
 struct C3tVertex {
     position:   [f64; 3],
@@ -25,7 +23,7 @@ struct C3T {
 }
 
 impl C3T {
-    fn new(&self, path: &str, display: &glium::backend::Facade) -> C3T {
+    fn new(&self, path: &str) -> C3T {
         
         implement_vertex!(C3tVertex, position, normal, texcoord, blendweight, blendindex);
 
