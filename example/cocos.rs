@@ -8,9 +8,10 @@ extern crate glium;
 use glium::{DisplayBuild, Surface};
 extern crate image;
 use std::io::Cursor;
+use std::path::Path;
 
 fn main() {
-    let c3t = c3t::C3t::new("./cocos/orc.c3t");
+    let c3t = c3t::C3t::new(Path::new("./example/cocos/orc.c3t"));
 
     let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
 

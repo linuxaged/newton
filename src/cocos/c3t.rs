@@ -2,7 +2,9 @@ use serde::json::{self, Value};
 
 use std::io::prelude::*;
 use std::fs::File;
-
+use std::path::Path;
+use std::env;
+use std::error::Error;
 use glium;
 use glium::{DisplayBuild, Surface};
 
@@ -22,11 +24,17 @@ pub struct C3t {
 }
 
 impl C3t {
-    pub fn new(path: &str) -> C3t {
+    pub fn new(path: &Path) -> C3t {
         
         implement_vertex!(C3tVertex, position, normal, texcoord, blendweight, blendindex);
 
-        let mut f = File::open(path).unwrap();
+        let mut f = match File::open(path) {
+            Err(why) => panic!("{}. could not open {}, current dir: {}",
+                Error::description(&why),
+                path.display(),
+                env::current_dir().unwrap().display()),
+            Ok(file) => file,
+        };
         let mut s = String::new();
         f.read_to_string(&mut s);
 
@@ -54,6 +62,7 @@ impl C3t {
             };
             vertex_array.push(vertex);
         }
+        // TODO
         C3t{vertices:vertex_array, indices: index_array, texture:vec!["path".to_string()]}
         
     }
