@@ -1,90 +1,63 @@
-use math;
+use serde::json::{self, Value};
 
-// #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-// struct Attribute {
-//     size: u32,
-//     mytype: String,
-//     attribute: String
-// }
-// #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-// struct Part {
-//     id: String,
-//     mytype: String,
-//     indices: Vec<u32>
-// }
-// #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-// struct Mesh {
-//     attributes: Vec<Attribute>,
-//     vertices: Vec<f64>,
-//     parts: Vec<Part>
-// }
-// #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-// struct Texture {
-//     id: String,
-//     filename: String,
-//     mytype: String,
-//     wrapModeU: String,
-//     wrapModeV: String
-// }
-// #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-// struct Material {
-//     id: String,
-//     ambient: Vector3,
-//     diffuse: Vector3,
-//     emissive: Vector3,
-//     opacity: f64,
-//     specular: Vector3,
-//     shininess: f64,
-//     textures: Vec<Texture>
-// }
-// #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-// struct KeyFrame {
-//     keytime: f64,
-//     rotation: Quertanion,
-//     scale: Vector3,
-//     translation: Vector3
-// }
-// #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-// struct Bone {
-//     id: String,
-//     keyframes: Vec<KeyFrame>
-// }
-// #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-// struct Animation {
-//     id: String,
-//     length: f64,
+use std::io::prelude::*;
+use std::fs::File;
 
-// }
-// #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-// struct C3T {
-//     version: String,
-//     id: String,
-//     meshes: Mesh
-// }
+use glium;
+use glium::{DisplayBuild, Surface};
+use std::io::Cursor;
 
-struct AABB {
-    _min: math::vector3::Vector3,
-    _max: math::vector3::Vector3
+use image;
+
+#[derive(Copy, Clone, Serialize, Deserialize, Display)]
+struct C3tVertex {
+    position:   [f64; 3],
+    normal:     [f64; 3],
+    texcoord:   [f64; 2],
+    blendweight:[f64; 4],
+    blendindex: [f64; 4]
 }
 
-struct MeshVertexAttribs {
-    // size: gl::types::GLint,
-    // t: gl::types::GLenum,
-    vertexAttrib: i32,
-    attribSizeBytes: i32,
+struct C3T {
+    vertices: Vec<C3tVertex>,
+    indices: Vec<u32>,
+    texture: Vec<String>
 }
 
-struct MeshData {
-    vertex: Vec<f64>,
-    vertexSizeInFloat: i32,
-    subMeshIndices: Vec<Vec<u16>>,
-    subMeshIds: Vec<String>,
-    subMeshAABB: Vec<AABB>,
-    numIndex: i32,
-    atttibs: Vec<MeshVertexAttribs>,
-    attribCount: i32
-}
+impl C3T {
+    fn new(&self, path: &str, display: &glium::backend::Facade) -> C3T {
+        
+        implement_vertex!(C3tVertex, position, normal, texcoord, blendweight, blendindex);
 
-struct MeshDatas {
-    meshDatas: Vec<MeshData>,
+        let mut f = File::open(path).unwrap();
+        let mut s = String::new();
+        f.read_to_string(&mut s);
+
+        let data: Value = json::from_str(&s).unwrap();
+
+        let meshes = data.find("meshes").unwrap();
+        let mesh_array = meshes.as_array().unwrap();
+        let mesh = mesh_array[0].as_object().unwrap();
+
+        // get vertex indices
+        let parts = mesh.get("parts").unwrap();
+        let part_array = parts.as_array().unwrap();
+        let part = part_array[0].as_object().unwrap();
+        let index_array:Vec<u32> = (json::from_value(part.get("indices").unwrap().clone()) ).unwrap();
+        // get vertex positions
+        let vertices:Vec<f64> = (json::from_value(mesh.get("vertices").unwrap().clone()) ).unwrap();
+        let mut vertex_array:Vec<C3tVertex> = Vec::<C3tVertex>::new();
+        for i in (0..vertices.len()).step_by(16) {
+            let vertex = C3tVertex{
+                position:   [vertices[i+0], vertices[i+1],vertices[i+2]],
+                normal:     [vertices[i+3], vertices[i+4],vertices[i+5]],
+                texcoord:   [vertices[i+6], vertices[i+7]],
+                blendweight:[vertices[i+8], vertices[i+9],vertices[i+10],vertices[i+11]],
+                blendindex: [vertices[i+12],vertices[i+13],vertices[i+14],vertices[i+15]]
+            };
+            vertex_array.push(vertex);
+        }
+        C3T{vertices:vertex_array, indices: index_array, texture:vec!["path".to_string()]}
+        
+    }
 }
