@@ -1,5 +1,5 @@
 use serde::json::{self, Value};
-
+use serde;
 use std::io::prelude::*;
 use std::fs::File;
 use std::path::Path;
@@ -15,6 +15,23 @@ pub struct C3tVertex {
     texcoord:   [f64; 2],
     blendweight:[f64; 4],
     blendindex: [f64; 4]
+}
+
+impl serde::Deserialize for C3tVertex {
+    #[inline]
+    fn deserialize<D>(deserializer: &mut D) -> Result<Value, D::Error>
+        where D: serde::Deserializer {
+
+        let vertices: [f64; 16] = try!(serde::Deserialize::visit_seq(visitor));
+
+        Ok(C3tVertex {
+            position:[vertices[0], vertices[1],vertices[2]],
+            normal:[vertices[3], vertices[4], vertices[5]],
+            texcood:[vertices[6], vertices[7]],
+            blendweight:[vertices[8], vertices[9], vertices[10], vertices[11]],
+            blendindex:[vertices[12], vertices[13],vertices[14], vertices[15]]
+        })
+    }
 }
 
 pub struct C3t {
