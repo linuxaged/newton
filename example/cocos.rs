@@ -1,10 +1,16 @@
 extern crate cgmath;
 use cgmath::FixedArray;
-use image;
-use cocos::c3t;
+
+extern crate newton;
+use newton::cocos::c3t;
+#[macro_use]
+extern crate glium;
+use glium::{DisplayBuild, Surface};
+extern crate image;
+use std::io::Cursor;
 
 fn main() {
-    let c3t = C3T::new("./cocos/orc.c3t");
+    let c3t = c3t::C3t::new("./cocos/orc.c3t");
 
     let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
 

@@ -5,10 +5,9 @@ use std::fs::File;
 
 use glium;
 use glium::{DisplayBuild, Surface};
-use std::io::Cursor;
 
 #[derive(Copy, Clone, Serialize, Deserialize, Display)]
-struct C3tVertex {
+pub struct C3tVertex {
     position:   [f64; 3],
     normal:     [f64; 3],
     texcoord:   [f64; 2],
@@ -16,14 +15,14 @@ struct C3tVertex {
     blendindex: [f64; 4]
 }
 
-struct C3T {
-    vertices: Vec<C3tVertex>,
-    indices: Vec<u32>,
-    texture: Vec<String>
+pub struct C3t {
+    pub vertices: Vec<C3tVertex>,
+    pub indices: Vec<u32>,
+    pub texture: Vec<String>
 }
 
-impl C3T {
-    fn new(&self, path: &str) -> C3T {
+impl C3t {
+    pub fn new(path: &str) -> C3t {
         
         implement_vertex!(C3tVertex, position, normal, texcoord, blendweight, blendindex);
 
@@ -55,7 +54,7 @@ impl C3T {
             };
             vertex_array.push(vertex);
         }
-        C3T{vertices:vertex_array, indices: index_array, texture:vec!["path".to_string()]}
+        C3t{vertices:vertex_array, indices: index_array, texture:vec!["path".to_string()]}
         
     }
 }
