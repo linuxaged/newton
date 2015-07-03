@@ -8,7 +8,7 @@ use std::error::Error;
 use glium;
 use glium::{DisplayBuild, Surface};
 
-#[derive(Copy, Clone, Serialize, Deserialize, Display)]
+#[derive(Copy, Clone, Serialize, Display)]
 pub struct C3tVertex {
     position:   [f64; 3],
     normal:     [f64; 3],
@@ -17,22 +17,22 @@ pub struct C3tVertex {
     blendindex: [f64; 4]
 }
 
-impl serde::Deserialize for C3tVertex {
-    #[inline]
-    fn deserialize<D>(deserializer: &mut D) -> Result<Value, D::Error>
-        where D: serde::Deserializer {
+// impl serde::Deserialize for C3tVertex {
+//     #[inline]
+//     fn deserialize<D>(deserializer: &mut D) -> Result<C3tVertex, D::Error>
+//         where D: serde::Deserializer {
 
-        let vertices: [f64; 16] = try!(serde::Deserialize::visit_seq(visitor));
+//         let vertices: [f64; 16] = try!(serde::Deserialize::visit_seq(visitor));
 
-        Ok(C3tVertex {
-            position:[vertices[0], vertices[1],vertices[2]],
-            normal:[vertices[3], vertices[4], vertices[5]],
-            texcood:[vertices[6], vertices[7]],
-            blendweight:[vertices[8], vertices[9], vertices[10], vertices[11]],
-            blendindex:[vertices[12], vertices[13],vertices[14], vertices[15]]
-        })
-    }
-}
+//         Ok(C3tVertex {
+//             position:[vertices[0], vertices[1],vertices[2]],
+//             normal:[vertices[3], vertices[4], vertices[5]],
+//             texcood:[vertices[6], vertices[7]],
+//             blendweight:[vertices[8], vertices[9], vertices[10], vertices[11]],
+//             blendindex:[vertices[12], vertices[13],vertices[14], vertices[15]]
+//         })
+//     }
+// }
 
 pub struct C3t {
     pub vertices: Vec<C3tVertex>,
