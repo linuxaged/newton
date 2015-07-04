@@ -24,4 +24,4 @@ git = "https://github.com/tomaka/glium"
 
 [[example]]
 name = "cocos"
-path = "example/cocos.rs"
+path = "example/cocos/cocos.rs"
