@@ -7,6 +7,7 @@ use std::env;
 use std::error::Error;
 use glium;
 use glium::{DisplayBuild, Surface};
+use std::collections::BTreeMap;
 
 #[derive(Copy, Clone, Serialize, Display)]
 pub struct C3tVertex {
@@ -15,6 +16,23 @@ pub struct C3tVertex {
     texcoord:   [f64; 2],
     blendweight:[f64; 4],
     blendindex: [f64; 4]
+}
+
+struct Bone {
+    id: String,
+    transform: [f64; 16]
+}
+#[derive(Clone, Serialize, Deserialize, Display)]
+struct Node {
+    id: String,
+    skeleton: bool,
+    transform: [f64; 16],
+    childrens: Option<Vec<Node>>
+}
+
+struct SkeletalAnimation {
+    bones: Vec<Bone>,
+
 }
 
 // impl serde::Deserialize for C3tVertex {
@@ -41,6 +59,14 @@ pub struct C3t {
 }
 
 impl C3t {
+    fn parseNodes(jnode: &BTreeMap<String, Value>) -> Node {
+        let nodes = Vec::<Node>::new();
+        Node{id: jnode.get("id").unwrap(), skeleton: jnode.get("skeleton").unwrap(),
+         transform: (json::from_value(jnode.get("transform").unwrap().clone()) ).unwrap(),
+         childrens: 
+        }
+    }
+
     pub fn new(path: &Path) -> C3t {
         
         implement_vertex!(C3tVertex, position, normal, texcoord, blendweight, blendindex);
@@ -79,8 +105,15 @@ impl C3t {
             };
             vertex_array.push(vertex);
         }
+        // get nodes
+        let nodes = data.find("nodes").unwrap();
+        let node_array = nodes.as_array().unwrap();
+        let node = node_array[1].as_object().unwrap();
+        C3t::parseNodes(node);
         // TODO
         C3t{vertices:vertex_array, indices: index_array, texture:vec!["path".to_string()]}
         
     }
+
+    
 }

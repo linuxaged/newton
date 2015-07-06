@@ -19,7 +19,7 @@ fn main() {
     let index_buffer = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList,
                                           c3t.indices);
     // load texture
-    let image = image::load(Cursor::new(&include_bytes!("./cocos/monguger.tga")[..]),
+    let image = image::load(Cursor::new(&include_bytes!("monguger.tga")[..]),
                             image::ImageFormat::TGA).unwrap();
     let texture = glium::texture::Texture2d::new(&display, image);
 
