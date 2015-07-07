@@ -27,7 +27,7 @@ struct Node {
     id: String,
     skeleton: bool,
     transform: [f64; 16],
-    childrens: Option<Vec<Node>>
+    children: Option<Vec<Node>>
 }
 
 struct SkeletalAnimation {
@@ -60,10 +60,23 @@ pub struct C3t {
 
 impl C3t {
     fn parseNodes(jnode: &BTreeMap<String, Value>) -> Node {
-        let nodes = Vec::<Node>::new();
-        Node{id: jnode.get("id").unwrap(), skeleton: jnode.get("skeleton").unwrap(),
-         transform: (json::from_value(jnode.get("transform").unwrap().clone()) ).unwrap(),
-         childrens: 
+        Node {
+            id: jnode.get("id").unwrap().as_string().unwrap().to_string(), 
+            skeleton: jnode.get("skeleton").unwrap().as_boolean().unwrap(),
+            transform: (json::from_value(jnode.get("transform").unwrap().clone()) ).unwrap(),
+            children: match jnode.get("children") {
+                Some(children) => {
+                    let mut nodes = Vec::<Node>::new();
+                    for child in children.as_array().unwrap() {
+                        println!("add a child");
+                        nodes.push(C3t::parseNodes(child.as_object().unwrap()));
+                    }
+                    Some(nodes)
+                },
+                None => {
+                    None
+                }
+            }
         }
     }
 
@@ -109,11 +122,10 @@ impl C3t {
         let nodes = data.find("nodes").unwrap();
         let node_array = nodes.as_array().unwrap();
         let node = node_array[1].as_object().unwrap();
-        C3t::parseNodes(node);
+        let node_tree = C3t::parseNodes(node);
         // TODO
         C3t{vertices:vertex_array, indices: index_array, texture:vec!["path".to_string()]}
         
     }
 
-    
 }
