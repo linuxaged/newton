@@ -35,22 +35,22 @@ struct SkeletalAnimation {
 
 }
 
-// impl serde::Deserialize for C3tVertex {
-//     #[inline]
-//     fn deserialize<D>(deserializer: &mut D) -> Result<C3tVertex, D::Error>
-//         where D: serde::Deserializer {
+impl serde::Deserialize for C3tVertex {
+    #[inline]
+    fn deserialize<D>(deserializer: &mut D) -> Result<C3tVertex, D::Error>
+        where D: serde::Deserializer {
 
-//         let vertices: [f64; 16] = try!(serde::Deserialize::visit_seq(visitor));
+        let vertices: [f64; 16] = try!(serde::Deserialize::deserialize(deserializer));
 
-//         Ok(C3tVertex {
-//             position:[vertices[0], vertices[1],vertices[2]],
-//             normal:[vertices[3], vertices[4], vertices[5]],
-//             texcood:[vertices[6], vertices[7]],
-//             blendweight:[vertices[8], vertices[9], vertices[10], vertices[11]],
-//             blendindex:[vertices[12], vertices[13],vertices[14], vertices[15]]
-//         })
-//     }
-// }
+        Ok(C3tVertex {
+            position:[vertices[0], vertices[1],vertices[2]],
+            normal:[vertices[3], vertices[4], vertices[5]],
+            texcoord:[vertices[6], vertices[7]],
+            blendweight:[vertices[8], vertices[9], vertices[10], vertices[11]],
+            blendindex:[vertices[12], vertices[13],vertices[14], vertices[15]]
+        })
+    }
+}
 
 pub struct C3t {
     pub vertices: Vec<C3tVertex>,
@@ -61,7 +61,7 @@ pub struct C3t {
 impl C3t {
     fn parseNodes(jnode: &BTreeMap<String, Value>) -> Node {
         Node {
-            id: jnode.get("id").unwrap().as_string().unwrap().to_string(), 
+            id: jnode.get("id").unwrap().as_string().unwrap().to_string(),
             skeleton: jnode.get("skeleton").unwrap().as_boolean().unwrap(),
             transform: (json::from_value(jnode.get("transform").unwrap().clone()) ).unwrap(),
             children: match jnode.get("children") {
@@ -81,7 +81,7 @@ impl C3t {
     }
 
     pub fn new(path: &Path) -> C3t {
-        
+
         implement_vertex!(C3tVertex, position, normal, texcoord, blendweight, blendindex);
 
         let mut f = match File::open(path) {
@@ -106,18 +106,12 @@ impl C3t {
         let part = part_array[0].as_object().unwrap();
         let index_array:Vec<u32> = (json::from_value(part.get("indices").unwrap().clone()) ).unwrap();
         // get vertex positions
-        let vertices:Vec<f64> = (json::from_value(mesh.get("vertices").unwrap().clone()) ).unwrap();
         let mut vertex_array:Vec<C3tVertex> = Vec::<C3tVertex>::new();
-        for i in (0..vertices.len()).step_by(16) {
-            let vertex = C3tVertex{
-                position:   [vertices[i+0], vertices[i+1],vertices[i+2]],
-                normal:     [vertices[i+3], vertices[i+4],vertices[i+5]],
-                texcoord:   [vertices[i+6], vertices[i+7]],
-                blendweight:[vertices[i+8], vertices[i+9],vertices[i+10],vertices[i+11]],
-                blendindex: [vertices[i+12],vertices[i+13],vertices[i+14],vertices[i+15]]
-            };
-            vertex_array.push(vertex);
+        match json::from_value(mesh.get("vertices").unwrap().clone() ) {
+            Ok(va) => vertex_array = va,
+            Err(e) => println!("de to C3tVertex error:{:?}!", e)
         }
+
         // get nodes
         let nodes = data.find("nodes").unwrap();
         let node_array = nodes.as_array().unwrap();
@@ -125,7 +119,7 @@ impl C3t {
         let node_tree = C3t::parseNodes(node);
         // TODO
         C3t{vertices:vertex_array, indices: index_array, texture:vec!["path".to_string()]}
-        
+
     }
 
 }
