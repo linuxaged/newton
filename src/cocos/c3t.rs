@@ -17,9 +17,9 @@ pub struct C3tVertex {
     blendweight:[f64; 4],
     blendindex: [f64; 4]
 }
-
+#[derive(Clone, Serialize, Deserialize, Display)]
 struct Bone {
-    id: String,
+    node: String,
     transform: [f64; 16]
 }
 #[derive(Clone, Serialize, Deserialize, Display)]
@@ -92,7 +92,7 @@ impl C3t {
         let vertices: Vec<f64> = (json::from_value(mesh.get("vertices").unwrap().clone()) ).unwrap();
 
         let mut vertex_array:Vec<C3tVertex> = Vec::<C3tVertex>::new();
-        
+
         for i in (0..vertices.len()).step_by(16) {
             let vertex = C3tVertex{
                 position:[vertices[i+0], vertices[i+1],vertices[i+2]],
@@ -109,6 +109,17 @@ impl C3t {
         let node_array = nodes.as_array().unwrap();
         let node = node_array[1].as_object().unwrap();
         let node_tree = C3t::parseNodes(node);
+        // get bones
+        let node_part = node_array[0].as_object().unwrap();
+        let parts = node_part.get("parts").unwrap().as_array().unwrap();
+        let bones = parts[0].as_object().unwrap().get("bones").unwrap().as_array().unwrap();
+        let mut bone_array = Vec::<Bone>::new();
+        for bone in bones {
+            let b = json::from_value(bone.clone()).unwrap();
+            bone_array.push(b);
+        }
+        // caculate MatrixPalette
+
         // TODO
         C3t{vertices:vertex_array, indices: index_array, texture:vec!["path".to_string()]}
 
