@@ -40,12 +40,12 @@ struct Node {
     children: Option<Vec<Node>>
 }
 
-#[derive(Clone, Serialize, Deserialize, Display)]
+#[derive(Clone, Serialize, Deserialize, Display, Debug)]
 struct KeyFrame {
-    keytime: f64,
-    rotation: [f64; 4],
-    scale: [f64; 3],
-    translation: [f64; 3]
+    keytime: f32,
+    rotation: [f32; 4],
+    scale: [f32; 3],
+    translation: [f32; 3]
 }
 
 struct SkeletalAnimation {
@@ -153,6 +153,12 @@ impl C3t {
             kfs.clear();
         }
 
+        for (bone_id, kfs) in bone_keyframes {
+            println!("boneId: {}", bone_id);
+            for kf in kfs {
+                println!("kf: {:?}", kf);
+            }
+        }
 
         // fill bone curves
 
