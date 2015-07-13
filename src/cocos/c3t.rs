@@ -1,5 +1,3 @@
-use math::{vector3, quaternion};
-
 use serde::json::{self, Value};
 use serde;
 use std::io::prelude::*;
@@ -12,6 +10,8 @@ use glium::{DisplayBuild, Surface};
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 
+use cocos::animation;
+
 #[derive(Copy, Clone, Serialize, Display)]
 pub struct C3tVertex {
     position:   [f64; 3],
@@ -19,33 +19,6 @@ pub struct C3tVertex {
     texcoord:   [f64; 2],
     blendweight:[f64; 4],
     blendindex: [f64; 4]
-}
-#[derive(Clone, Serialize, Deserialize, Display)]
-struct Bone {
-    node: String,
-    transform: [f64; 16]
-}
-
-struct BoneBlendState {
-    localTranslate: vector3::Vector3,
-    localRot: quaternion::Quaternion,
-    localScale: vector3::Vector3,
-    weight: f32
-}
-#[derive(Clone, Serialize, Deserialize, Display)]
-struct Node {
-    id: String,
-    skeleton: bool,
-    transform: [f64; 16],
-    children: Option<Vec<Node>>
-}
-
-#[derive(Clone, Serialize, Deserialize, Display, Debug)]
-struct KeyFrame {
-    keytime: f32,
-    rotation: [f32; 4],
-    scale: [f32; 3],
-    translation: [f32; 3]
 }
 
 pub struct C3t {
@@ -55,14 +28,14 @@ pub struct C3t {
 }
 
 impl C3t {
-    fn parseNodes(jnode: &BTreeMap<String, Value>) -> Node {
-        Node {
+    fn parseNodes(jnode: &BTreeMap<String, Value>) -> animation::Node {
+        animation::Node {
             id: jnode.get("id").unwrap().as_string().unwrap().to_string(),
             skeleton: jnode.get("skeleton").unwrap().as_boolean().unwrap(),
             transform: (json::from_value(jnode.get("transform").unwrap().clone()) ).unwrap(),
             children: match jnode.get("children") {
                 Some(children) => {
-                    let mut nodes = Vec::<Node>::new();
+                    let mut nodes = Vec::<animation::Node>::new();
                     for child in children.as_array().unwrap() {
                         println!("add a child");
                         nodes.push(C3t::parseNodes(child.as_object().unwrap()));
@@ -126,7 +99,7 @@ impl C3t {
         let node_part = node_array[0].as_object().unwrap();
         let parts = node_part.get("parts").unwrap().as_array().unwrap();
         let bones = parts[0].as_object().unwrap().get("bones").unwrap().as_array().unwrap();
-        let mut bone_array = Vec::<Bone>::new();
+        let mut bone_array = Vec::<animation::Bone>::new();
         for bone in bones {
             let b = json::from_value(bone.clone()).unwrap();
             bone_array.push(b);
@@ -134,12 +107,12 @@ impl C3t {
         // fill animation
         let bone_animation_array = data.find("animations").unwrap().as_array().unwrap();
         let bone_animations = bone_animation_array[0].as_object().unwrap().get("bones").unwrap().as_array().unwrap();
-        let mut bone_keyframes = HashMap::<&str, Vec<KeyFrame> >::new();
+        let mut bone_keyframes = HashMap::<&str, Vec<animation::KeyFrame> >::new();
 
         for bone_anim in bone_animations {
             let bone_id = bone_anim.as_object().unwrap().get("boneId").unwrap().as_string().unwrap();
             let bone_keyframe_array = bone_anim.as_object().unwrap().get("keyframes").unwrap().as_array().unwrap();
-            let mut kfs = Vec::<KeyFrame>::new();
+            let mut kfs = Vec::<animation::KeyFrame>::new();
             for bkf in bone_keyframe_array {
                 let keyframe = json::from_value(bkf.clone()).unwrap();
                 kfs.push(keyframe);
