@@ -48,11 +48,6 @@ struct KeyFrame {
     translation: [f32; 3]
 }
 
-struct SkeletalAnimation {
-    bones: Vec<Bone>,
-
-}
-
 pub struct C3t {
     pub vertices: Vec<C3tVertex>,
     pub indices: Vec<u32>,
