@@ -66,7 +66,11 @@ struct AnimationSample {
 }
 
 struct AnimationClip {
-    Field: typ
+    skeletons: &[Skeleton],
+    fps: f32,
+    frameCount: u32,
+    samples: &[AnimationSample],
+    isLooping: bool
 }
 
 struct SkinnedVertex {
@@ -74,16 +78,16 @@ struct SkinnedVertex {
     norm: [f64; 3],
     u: float,
     v: float,
-    jointIndex: [u8; 4]
+    jointIndex: [u8; 4],
     weight: [f32; 3]
 }
 
 pub struct Animation {
-    pub struct Curve {
-        translateCurve: &mut AnimationCurveVec3,
-        rotCurve: &mut AnimationCurveQuat,
-        scaleCurve: &mut AnimationCurveVec3
-    }
+    // pub struct Curve {
+    //     translateCurve: &mut AnimationCurveVec3,
+    //     rotCurve: &mut AnimationCurveQuat,
+    //     scaleCurve: &mut AnimationCurveVec3
+    // }
 }
 
 impl Animation {
@@ -93,4 +97,17 @@ impl Animation {
     pub fn update(&self,t: f32) {
 
     }
+}
+
+animation.init() {
+
+}
+
+//
+animation.update(t) {
+    for curve in bone_curves {
+        setAnimationValue()
+    }
+    // update matrix palette
+
 }
