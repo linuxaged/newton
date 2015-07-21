@@ -104,29 +104,6 @@ impl C3t {
             let b = json::from_value(bone.clone()).unwrap();
             bone_array.push(b);
         }
-        // fill animation
-        let bone_animation_array = data.find("animations").unwrap().as_array().unwrap();
-        let bone_animations = bone_animation_array[0].as_object().unwrap().get("bones").unwrap().as_array().unwrap();
-        let mut bone_keyframes = HashMap::<&str, Vec<animation::KeyFrame> >::new();
-
-        for bone_anim in bone_animations {
-            let bone_id = bone_anim.as_object().unwrap().get("boneId").unwrap().as_string().unwrap();
-            let bone_keyframe_array = bone_anim.as_object().unwrap().get("keyframes").unwrap().as_array().unwrap();
-            let mut kfs = Vec::<animation::KeyFrame>::new();
-            for bkf in bone_keyframe_array {
-                let keyframe = json::from_value(bkf.clone()).unwrap();
-                kfs.push(keyframe);
-            }
-            bone_keyframes.insert(bone_id, kfs.clone());
-            kfs.clear();
-        }
-
-        for (bone_id, kfs) in bone_keyframes {
-            println!("boneId: {}", bone_id);
-            for kf in kfs {
-                println!("kf: {:?}", kf);
-            }
-        }
 
         // fill bone curves
 

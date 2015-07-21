@@ -25,6 +25,9 @@ impl Quaternion {
         self.j *= d;
         self.k *= d;
     }
+    pub fn slerp(from: &Quaternion, to: &Quaternion, t: f32, result: &mut Quaternion) {
+        
+    }
 }
 
 impl Mul for Quaternion {
