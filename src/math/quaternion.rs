@@ -31,7 +31,7 @@ impl Quaternion {
         let A: f32;
         let B: f32;
 
-        /* Parameter checking */
+        // Parameter checking
         if (t<0.0f || t>1.0f) {
             result.r = 0;
             result.i = 0;
@@ -40,26 +40,26 @@ impl Quaternion {
             return;
         }
 
-        /* Find sine of Angle between Quaternion A and B (dot product between quaternion A and B) */
+        // Find sine of Angle between Quaternion A and B (dot product between quaternion A and B)
         fCosine = from.r*to.r + from.i*to.i + from.j*to.j + from.k*to.k;
 
         if (fCosine < 0)
         {
             let qi: Quaternion;
 
-            /*
-                <http://www.magic-software.com/Documentation/Quaternions.pdf>
+            
+            // <http://www.magic-software.com/Documentation/Quaternions.pdf>
 
-                "It is important to note that the quaternions q and -q represent
-                the same rotation... while either quaternion will do, the
-                interpolation methods require choosing one over the other.
+            // "It is important to note that the quaternions q and -q represent
+            // the same rotation... while either quaternion will do, the
+            // interpolation methods require choosing one over the other.
 
-                "Although q1 and -q1 represent the same rotation, the values of
-                Slerp(t; q0, q1) and Slerp(t; q0,-q1) are not the same. It is
-                customary to choose the sign... on q1 so that... the angle
-                between q0 and q1 is acute. This choice avoids extra
-                spinning caused by the interpolated rotations."
-            */
+            // "Although q1 and -q1 represent the same rotation, the values of
+            // Slerp(t; q0, q1) and Slerp(t; q0,-q1) are not the same. It is
+            // customary to choose the sign... on q1 so that... the angle
+            // between q0 and q1 is acute. This choice avoids extra
+            // spinning caused by the interpolated rotations."
+            
             qi.r = -to.r;
             qi.i = -to.i;
             qi.j = -to.j;
@@ -72,25 +72,25 @@ impl Quaternion {
         fCosine = cmp::min(fCosine, 1.0f);
         fAngle = ACOS_VAL ((fCosine * 65536) as i32);
 
-        /* Avoid a division by zero */
+        // Avoid a division by zero
         if (fAngle==0.0f)
         {
-            qOut = from;
+            result = from;
             return;
         }
 
-        /* Precompute some values */
+        // Precompute some values
         A = (float)(PVRTFSIN((1.0f-t)*fAngle) / PVRTFSIN(fAngle));
         B = (float)(PVRTFSIN(t*fAngle) / PVRTFSIN(fAngle));
 
-        /* Compute resulting quaternion */
-        qOut.i = A * from.i + B * to.i;
-        qOut.j = A * from.j + B * to.j;
-        qOut.k = A * from.k + B * to.k;
-        qOut.r = A * from.r + B * to.r;
+        // Compute resulting quaternion
+        result.i = A * from.i + B * to.i;
+        result.j = A * from.j + B * to.j;
+        result.k = A * from.k + B * to.k;
+        result.r = A * from.r + B * to.r;
 
-        /* Normalise result */
-        PVRTMatrixQuaternionNormalizeF(qOut);
+        // Normalise result
+        normalize(result);
     }
 }
 
