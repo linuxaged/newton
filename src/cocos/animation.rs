@@ -1,5 +1,8 @@
-use math::{vector3, quaternion};
-use serde::json::{self, Value};
+extern crate serde;
+extern crate serde_json;
+
+use math::{vector3, matrix, quaternion};
+use std::collections::HashMap;
 
 #[derive(Clone, Serialize, Deserialize, Display)]
 pub struct Bone {
@@ -76,8 +79,8 @@ struct AnimationClip {
 struct SkinnedVertex {
     pos: [f64; 3],
     norm: [f64; 3],
-    u: float,
-    v: float,
+    u: f32,
+    v: f32,
     jointIndex: [u8; 4],
     weight: [f32; 3]
 }
@@ -87,18 +90,18 @@ pub struct Animation {
 }
 
 impl Animation {
-    pub fn new(data: Value) -> Animation {
+    pub fn new(data: serde_json::Value) -> Animation {
         let bone_animation_array = data.find("animations").unwrap().as_array().unwrap();
         let _length = bone_animation_array[0].as_object().unwrap().get("length").unwrap();
         let bone_animations = bone_animation_array[0].as_object().unwrap().get("bones").unwrap().as_array().unwrap();
-        let mut bone_keyframes = HashMap::<&str, Vec<animation::KeyFrame> >::new();
+        let mut bone_keyframes = HashMap::<&str, Vec<KeyFrame> >::new();
 
         for bone_anim in bone_animations {
             let bone_id = bone_anim.as_object().unwrap().get("boneId").unwrap().as_string().unwrap();
             let bone_keyframe_array = bone_anim.as_object().unwrap().get("keyframes").unwrap().as_array().unwrap();
-            let mut kfs = Vec::<animation::KeyFrame>::new();
+            let mut kfs = Vec::<KeyFrame>::new();
             for bkf in bone_keyframe_array {
-                let keyframe = json::from_value(bkf.clone()).unwrap();
+                let keyframe = serde_json::from_value(bkf.clone()).unwrap();
                 kfs.push(keyframe);
             }
             bone_keyframes.insert(bone_id, kfs.clone());

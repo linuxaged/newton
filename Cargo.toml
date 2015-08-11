@@ -7,11 +7,10 @@ authors = ["Tracy Ma <1991md@gmail.com>"]
 name = "newton"
 path = "src/lib.rs"
 
-[dependencies.serde]
-git = "https://github.com/serde-rs/serde"
-
-[dependencies.serde_macros]
-git = "https://github.com/serde-rs/serde"
+[dependencies]
+serde = "*"
+serde_json = "*"
+serde_macros = "*"
 
 [dependencies.cgmath]
 git = "https://github.com/bjz/cgmath-rs"

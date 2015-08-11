@@ -1,5 +1,6 @@
-use serde::json::{self, Value};
-use serde;
+extern crate serde;
+extern crate serde_json;
+
 use std::io::prelude::*;
 use std::fs::File;
 use std::path::Path;
@@ -8,7 +9,6 @@ use std::error::Error;
 use glium;
 use glium::{DisplayBuild, Surface};
 use std::collections::BTreeMap;
-use std::collections::HashMap;
 
 use cocos::animation;
 
@@ -32,7 +32,7 @@ impl C3t {
         animation::Node {
             id: jnode.get("id").unwrap().as_string().unwrap().to_string(),
             skeleton: jnode.get("skeleton").unwrap().as_boolean().unwrap(),
-            transform: (json::from_value(jnode.get("transform").unwrap().clone()) ).unwrap(),
+            transform: (serde_json::from_value(jnode.get("transform").unwrap().clone()) ).unwrap(),
             children: match jnode.get("children") {
                 Some(children) => {
                     let mut nodes = Vec::<animation::Node>::new();
@@ -63,7 +63,7 @@ impl C3t {
         let mut s = String::new();
         f.read_to_string(&mut s);
 
-        let data: Value = json::from_str(&s).unwrap();
+        let data: serde_json::Value = serde_json::from_str(&s).unwrap();
 
         let meshes = data.find("meshes").unwrap();
         let mesh_array = meshes.as_array().unwrap();
@@ -73,9 +73,9 @@ impl C3t {
         let parts = mesh.get("parts").unwrap();
         let part_array = parts.as_array().unwrap();
         let part = part_array[0].as_object().unwrap();
-        let index_array:Vec<u32> = (json::from_value(part.get("indices").unwrap().clone()) ).unwrap();
+        let index_array:Vec<u32> = (serde_json::from_value(part.get("indices").unwrap().clone()) ).unwrap();
         // get vertex positions
-        let vertices: Vec<f64> = (json::from_value(mesh.get("vertices").unwrap().clone()) ).unwrap();
+        let vertices: Vec<f64> = (serde_json::from_value(mesh.get("vertices").unwrap().clone()) ).unwrap();
 
         let mut vertex_array:Vec<C3tVertex> = Vec::<C3tVertex>::new();
 
@@ -101,7 +101,7 @@ impl C3t {
         let bones = parts[0].as_object().unwrap().get("bones").unwrap().as_array().unwrap();
         let mut bone_array = Vec::<animation::Bone>::new();
         for bone in bones {
-            let b = json::from_value(bone.clone()).unwrap();
+            let b = serde_json::from_value(bone.clone()).unwrap();
             bone_array.push(b);
         }
 

@@ -32,7 +32,7 @@ impl Quaternion {
         let B: f32;
 
         // Parameter checking
-        if (t<0.0f || t>1.0f) {
+        if (t<0.0f32 || t>1.0f32) {
             result.r = 0;
             result.i = 0;
             result.j = 0;
@@ -65,23 +65,23 @@ impl Quaternion {
             qi.j = -to.j;
             qi.k = -to.k;
             
-            slerp(from, qi, t, result);
+            Quaternion::slerp(from, qi, t, result);
             return;
         }
 
-        fCosine = cmp::min(fCosine, 1.0f);
-        fAngle = ACOS_VAL ((fCosine * 65536) as i32);
+        fCosine = cmp::min(fCosine, 1.0f32);
+        fAngle = fCosine.acos();
 
         // Avoid a division by zero
-        if (fAngle==0.0f)
+        if (fAngle==0.0f32)
         {
             result = from;
             return;
         }
 
         // Precompute some values
-        A = (float)(PVRTFSIN((1.0f-t)*fAngle) / PVRTFSIN(fAngle));
-        B = (float)(PVRTFSIN(t*fAngle) / PVRTFSIN(fAngle));
+        A = ((1.0 - t)*fAngle).sin() / fAngle.sin();
+        B = (t*fAngle).sin() / fAngle.sin();
 
         // Compute resulting quaternion
         result.i = A * from.i + B * to.i;
