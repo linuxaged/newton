@@ -15,13 +15,13 @@ fn main() {
 
     let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
 
-    let vertex_buffer = glium::VertexBuffer::new(&display, c3t.vertices);
+    let vertex_buffer = glium::VertexBuffer::new(&display, &c3t.vertices[..]).unwrap();
     let index_buffer = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList,
-                                          c3t.indices);
+                                          &c3t.indices[..]).unwrap();
     // load texture
     let image = image::load(Cursor::new(&include_bytes!("monguger.tga")[..]),
                             image::ImageFormat::TGA).unwrap();
-    let texture = glium::texture::Texture2d::new(&display, image);
+    let texture = glium::texture::Texture2d::new(&display, image).unwrap();
 
     let vertex_shader_src = r#"
         #version 140
