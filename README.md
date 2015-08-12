@@ -1,5 +1,7 @@
 #Newton
 
+[![Build Status](https://travis-ci.org/linuxaged/newton.svg?branch=master)](https://travis-ci.org/linuxaged/newton)
+
 A hobby game engine in very early stage.
 
 ##Example
