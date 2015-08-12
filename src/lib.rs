@@ -1,4 +1,4 @@
-#![feature(libc, convert, custom_derive, plugin, step_by)]
+#![feature(libc, convert, custom_derive, plugin, step_by, core_simd)]
 #![plugin(serde_macros)]
 extern crate serde;
 #[macro_use]

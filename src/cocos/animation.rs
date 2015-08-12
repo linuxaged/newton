@@ -42,14 +42,14 @@ pub struct KeyFrame {
     translation: [f32; 3]
 }
 
-struct Joint {
+struct Joint<'a> {
     invBindPose: matrix::Matrix4x4,
-    name: &str,
+    name: &'a str,
     parent: u8
 }
 
-struct Skeleton {
-    joints: &[Joint],
+struct Skeleton<'a> {
+    joints: &'a [Joint<'a>],
     jointCount: u32
 }
 
@@ -59,20 +59,20 @@ struct JointPose {
     scale: vector3::Vector3
 }
 
-struct SkeletonPose {
-    skeleton: &Skeleton,
-    localPoses: &[JointPose]
+struct SkeletonPose<'a> {
+    skeleton: &'a Skeleton<'a>,
+    localPoses: &'a [JointPose]
 }
 
-struct AnimationSample {
-    jointPoses: &[JointPose]
+struct AnimationSample<'a> {
+    jointPoses: &'a [JointPose]
 }
 
-struct AnimationClip {
-    skeletons: &[Skeleton],
+struct AnimationClip<'a> {
+    skeletons: &'a [Skeleton<'a>],
     fps: f32,
     frameCount: u32,
-    samples: &[AnimationSample],
+    samples: &'a [AnimationSample<'a>],
     isLooping: bool
 }
 
@@ -92,7 +92,7 @@ pub struct Animation {
 impl Animation {
     pub fn new(data: serde_json::Value) -> Animation {
         let bone_animation_array = data.find("animations").unwrap().as_array().unwrap();
-        let _length = bone_animation_array[0].as_object().unwrap().get("length").unwrap();
+        let _length = bone_animation_array[0].as_object().unwrap().get("length").unwrap().as_f64().unwrap() as f32;
         let bone_animations = bone_animation_array[0].as_object().unwrap().get("bones").unwrap().as_array().unwrap();
         let mut bone_keyframes = HashMap::<&str, Vec<KeyFrame> >::new();
 
@@ -122,8 +122,8 @@ impl Animation {
 
         let moment = t % self.length;
         // 用插值计算出 moment 时刻的变化，然后对各个关节施加对应的变换
-        for curve in bone_curves {
-            setAnimationValue()
-        }
+        // for curve in bone_curves {
+        //     setAnimationValue()
+        // }
     }
 }

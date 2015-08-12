@@ -28,7 +28,7 @@ pub struct C3t {
 }
 
 impl C3t {
-    fn parseNodes(jnode: &BTreeMap<String, Value>) -> animation::Node {
+    fn parseNodes(jnode: &BTreeMap<String, serde_json::Value>) -> animation::Node {
         animation::Node {
             id: jnode.get("id").unwrap().as_string().unwrap().to_string(),
             skeleton: jnode.get("skeleton").unwrap().as_boolean().unwrap(),
