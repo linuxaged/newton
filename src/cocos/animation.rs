@@ -4,10 +4,13 @@ extern crate serde_json;
 use math::{vector3, matrix, quaternion};
 use std::collections::HashMap;
 
-#[derive(Clone, Serialize, Deserialize, Display)]
+///
+/// use flat struct instread of linked list,
+///
 pub struct Bone {
-    node: String,
-    transform: [f64; 16]
+    id: String,
+    transform: [f64; 16],
+    parent: u8
 }
 
 pub struct BoneBlendState {
@@ -15,6 +18,23 @@ pub struct BoneBlendState {
     localRot: quaternion::Quaternion,
     localScale: vector3::Vector3,
     weight: f32
+}
+
+struct Skeleton<'a> {
+    bones: Vec<&'a Bone >,
+    rootBones: Vec<&'a Bone >
+}
+
+impl<'a> Skeleton<'a> {
+    // pub fn new(data: serde_json::Value) -> Skeleton<'a> {
+    //     let nodes = data.find("nodes").unwrap().as_array().unwrap();
+    //     for node in nodes {
+    //         // is node or skeleton
+    //         if node.as_object().unwrap().get("skeleton").unwrap().as_f64().unwrap() {
+
+    //         }
+    //     }
+    // }
 }
 
 /// static binding pose tree of model
@@ -40,17 +60,6 @@ pub struct KeyFrame {
     rotation: [f32; 4],
     scale: [f32; 3],
     translation: [f32; 3]
-}
-
-struct Joint<'a> {
-    invBindPose: matrix::Matrix4x4,
-    name: &'a str,
-    parent: u8
-}
-
-struct Skeleton<'a> {
-    joints: &'a [Joint<'a>],
-    jointCount: u32
 }
 
 struct JointPose {

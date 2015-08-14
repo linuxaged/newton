@@ -28,6 +28,10 @@ pub struct C3t {
 }
 
 impl C3t {
+    ///
+    /// we onlu parse the skeleton node here,
+    /// TODO: parse Node nodes
+    ///
     fn parseNodes(jnode: &BTreeMap<String, serde_json::Value>) -> animation::Node {
         animation::Node {
             id: jnode.get("id").unwrap().as_string().unwrap().to_string(),
@@ -100,10 +104,6 @@ impl C3t {
         let parts = node_part.get("parts").unwrap().as_array().unwrap();
         let bones = parts[0].as_object().unwrap().get("bones").unwrap().as_array().unwrap();
         let mut bone_array = Vec::<animation::Bone>::new();
-        for bone in bones {
-            let b = serde_json::from_value(bone.clone()).unwrap();
-            bone_array.push(b);
-        }
 
         // fill bone curves
 

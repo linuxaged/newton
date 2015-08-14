@@ -1,6 +1,4 @@
 use std::ops::Mul;
-use std::f32;
-use std::cmp;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Quaternion {
@@ -17,7 +15,7 @@ impl Quaternion {
 
     pub fn normalize(&mut self) {
         let mut d = self.r * self.r + self.i * self.i   + self.j * self.j + self.k * self.k;
-        if (d == 0f32) {
+        if d == 0f32 {
             self.r = 1.0f32;
             return;
         }
@@ -28,13 +26,13 @@ impl Quaternion {
         self.k *= d;
     }
     pub fn slerp(from: &Quaternion, to: &Quaternion, t: f32, result: &mut Quaternion) {
-        let mut fCosine: f32;
-        let fAngle: f32;
-        let A: f32;
-        let B: f32;
+        let mut cosine: f32;
+        let angle: f32;
+        let a: f32;
+        let b: f32;
 
         // Parameter checking
-        if (t<0.0f32 || t>1.0f32) {
+        if t<0.0f32 || t>1.0f32 {
             result.r = 0.0;
             result.i = 0.0;
             result.j = 0.0;
@@ -43,9 +41,9 @@ impl Quaternion {
         }
 
         // Find sine of Angle between Quaternion A and B (dot product between quaternion A and B)
-        fCosine = from.r*to.r + from.i*to.i + from.j*to.j + from.k*to.k;
+        cosine = from.r*to.r + from.i*to.i + from.j*to.j + from.k*to.k;
 
-        if (fCosine < 0.0)
+        if cosine < 0.0
         {
             // <http://www.magic-software.com/Documentation/Quaternions.pdf>
 
@@ -58,17 +56,17 @@ impl Quaternion {
             // customary to choose the sign... on q1 so that... the angle
             // between q0 and q1 is acute. This choice avoids extra
             // spinning caused by the interpolated rotations."
-            let mut qi = Quaternion::new(-to.r, -to.i, -to.j, -to.k);
+            let qi = Quaternion::new(-to.r, -to.i, -to.j, -to.k);
 
             Quaternion::slerp(from, &qi, t, result);
             return;
         }
 
-        fCosine = fCosine.min(1.0);
-        fAngle = fCosine.acos();
+        cosine = cosine.min(1.0);
+        angle = cosine.acos();
 
         // Avoid a division by zero
-        if (fAngle==0.0f32)
+        if angle == 0.0f32
         {
             result.i = from.i;
             result.j = from.j;
@@ -78,14 +76,14 @@ impl Quaternion {
         }
 
         // Precompute some values
-        A = ((1.0 - t)*fAngle).sin() / fAngle.sin();
-        B = (t*fAngle).sin() / fAngle.sin();
+        a = ((1.0 - t)*angle).sin() / angle.sin();
+        b = (t*angle).sin() / angle.sin();
 
         // Compute resulting quaternion
-        result.i = A * from.i + B * to.i;
-        result.j = A * from.j + B * to.j;
-        result.k = A * from.k + B * to.k;
-        result.r = A * from.r + B * to.r;
+        result.i = a * from.i + b * to.i;
+        result.j = a * from.j + b * to.j;
+        result.k = a * from.k + b * to.k;
+        result.r = a * from.r + b * to.r;
 
         // Normalise result
         result.normalize();
