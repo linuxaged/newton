@@ -1,3 +1,4 @@
+#![feature(core_simd)]
 use std::simd::f32x4;
 use std::ops::{Add, Sub, Mul};
 
@@ -7,6 +8,20 @@ pub struct Matrix4x4 {
     pub y: f32x4,
     pub z: f32x4,
     pub w: f32x4
+}
+
+impl Matrix4x4 {
+    fn new(row00: f32, row01: f32, row02: f32, row03: f32, 
+            row10: f32, row11: f32, row12: f32, row13: f32,
+            row20: f32, row21: f32, row22: f32, row23: f32,
+            row30: f32, row31: f32, row32: f32, row33: f32) -> Matrix4x4 {
+        Matrix4x4{
+            x: f32x4(row00 , row01 , row02 , row03),
+            y: f32x4(row10 , row11 , row12 , row13),
+            z: f32x4(row20 , row21 , row22 , row23),
+            w: f32x4(row30 , row31 , row32 , row33)
+        }
+    }
 }
 
 impl Add for Matrix4x4 {
@@ -68,4 +83,11 @@ impl Mul for Matrix4x4 {
             w: f32x4(_w_0.0 + _w_0.1 + _w_0.2 + _w_0.3, _w_1.0 + _w_1.1 + _w_1.2 + _w_1.3, _w_2.0 + _w_2.1 + _w_2.2 + _w_2.3, _w_3.0 + _w_3.1 + _w_3.2 + _w_3.3),
         }
     }
+}
+
+#[test]
+fn test() {
+    let mat0 = Matrix4x4::new(1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0);
+    let mat1 = Matrix4x4::new(11.0,22.0,33.0,44.0,55.0,66.0,77.0,88.0,88.0,77.0,66.0,55.0,44.0,33.0,22.0,11.0);
+    println!("{:?}", mat0 * mat1);
 }

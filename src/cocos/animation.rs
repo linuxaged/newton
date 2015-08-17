@@ -127,12 +127,21 @@ impl Animation {
             length: _length
         }
     }
+
+    // fn setAnimationValue(arg: typ) -> ret {
+        
+    // }
     pub fn update(&self,t: f32) {
 
         let moment = t % self.length;
+
         // 用插值计算出 moment 时刻的变化，然后对各个关节施加对应的变换
         // for curve in bone_curves {
         //     setAnimationValue()
         // }
+
+        //
+        // 
+        // 
     }
 }
