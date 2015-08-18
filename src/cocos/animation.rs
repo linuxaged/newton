@@ -94,7 +94,13 @@ struct SkinnedVertex {
     weight: [f32; 3]
 }
 
+struct AnimationCurve {
+    Field: typ
+}
+
 pub struct Animation {
+    translateCurve: AnimationCurve;
+    rotCurve: 
     length: f32
 }
 
