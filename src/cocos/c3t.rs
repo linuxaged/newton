@@ -8,7 +8,7 @@ use std::env;
 use std::error::Error;
 use glium;
 use glium::{DisplayBuild, Surface};
-use std::collections::BTreeMap;
+
 
 use cocos::animation;
 
@@ -28,30 +28,7 @@ pub struct C3t {
 }
 
 impl C3t {
-    ///
-    /// we onlu parse the skeleton node here,
-    /// TODO: parse Node nodes
-    ///
-    fn parseNodes(jnode: &BTreeMap<String, serde_json::Value>) -> animation::Node {
-        animation::Node {
-            id: jnode.get("id").unwrap().as_string().unwrap().to_string(),
-            skeleton: jnode.get("skeleton").unwrap().as_boolean().unwrap(),
-            transform: (serde_json::from_value(jnode.get("transform").unwrap().clone()) ).unwrap(),
-            children: match jnode.get("children") {
-                Some(children) => {
-                    let mut nodes = Vec::<animation::Node>::new();
-                    for child in children.as_array().unwrap() {
-                        println!("add a child");
-                        nodes.push(C3t::parseNodes(child.as_object().unwrap()));
-                    }
-                    Some(nodes)
-                },
-                None => {
-                    None
-                }
-            }
-        }
-    }
+
 
     pub fn new(path: &Path) -> C3t {
 
@@ -94,16 +71,11 @@ impl C3t {
             vertex_array.push(vertex);
         }
 
-        // get nodes
-        let nodes = data.find("nodes").unwrap();
-        let node_array = nodes.as_array().unwrap();
-        let node = node_array[1].as_object().unwrap();
-        let node_tree = C3t::parseNodes(node);
         // get bones
-        let node_part = node_array[0].as_object().unwrap();
-        let parts = node_part.get("parts").unwrap().as_array().unwrap();
-        let bones = parts[0].as_object().unwrap().get("bones").unwrap().as_array().unwrap();
-        let mut bone_array = Vec::<animation::Bone>::new();
+        // let node_part = node_array[0].as_object().unwrap();
+        // let parts = node_part.get("parts").unwrap().as_array().unwrap();
+        // let bones = parts[0].as_object().unwrap().get("bones").unwrap().as_array().unwrap();
+        // let mut bone_array = Vec::<animation::Bone>::new();
 
         // fill bone curves
 

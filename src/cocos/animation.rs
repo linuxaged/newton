@@ -3,15 +3,7 @@ extern crate serde_json;
 
 use math::{vector3, matrix, quaternion};
 use std::collections::HashMap;
-
-///
-/// use flat struct instread of linked list,
-///
-pub struct Bone {
-    id: String,
-    transform: [f64; 16],
-    parent: u8
-}
+use std::collections::BTreeMap;
 
 pub struct BoneBlendState {
     localTranslate: vector3::Vector3,
@@ -37,19 +29,43 @@ impl<'a> Skeleton<'a> {
     // }
 }
 
+///
+/// use flat struct instread of linked list,
+///
+pub struct Bone {
+    id: String,
+    transform: matrix::Matrix4x4,
+    parent: u8
+}
+
 /// static binding pose tree of model
 #[derive(Clone, Serialize, Deserialize, Display)]
 pub struct Node {
     pub id: String,
     pub skeleton: bool,
-    pub transform: [f64; 16],
+    pub transform: [f32; 16],
     pub children: Option<Vec<Node>>
 }
 
 /// visit the nodes and store
 impl Node {
-    pub fn visit(&self) {
+    pub fn to_bones(&self, bones: &mut Vec<Bone>) {
+        bones.push(Bone{id: self.id, 
+                        transform: matrix::Matrix4x4::new(
+                            self.transform[0],self.transform[1],self.transform[2],self.transform[3],
+                            self.transform[4],self.transform[5],self.transform[6],self.transform[7],
+                            self.transform[8],self.transform[9],self.transform[10],self.transform[11],
+                            self.transform[12],self.transform[13],self.transform[14],self.transform[15]
+                        ), 
+                        parent: 0});
+        match self.children {
+            Some(bone_vec) => {
+                for bone in bone_vec {
 
+                }
+            },
+            None => ()
+        }
     }
 }
 
@@ -94,25 +110,32 @@ struct SkinnedVertex {
     weight: [f32; 3]
 }
 
+// 插值获得平滑曲线
 struct AnimationCurve {
-    Field: typ
+    curve: HashMap<String, Vec<KeyFrame> >
+}
+
+impl AnimationCurve {
+    // 计算当前时间的 QTS
+    pub fn evaluate(time: f32, dst: &[f32]) {
+        
+    }
 }
 
 pub struct Animation {
-    translateCurve: AnimationCurve;
-    rotCurve: 
+    curve: AnimationCurve,
     length: f32
 }
 
 impl Animation {
+    // deserialize animation
     pub fn new(data: serde_json::Value) -> Animation {
         let bone_animation_array = data.find("animations").unwrap().as_array().unwrap();
         let _length = bone_animation_array[0].as_object().unwrap().get("length").unwrap().as_f64().unwrap() as f32;
         let bone_animations = bone_animation_array[0].as_object().unwrap().get("bones").unwrap().as_array().unwrap();
-        let mut bone_keyframes = HashMap::<&str, Vec<KeyFrame> >::new();
-
+        let mut bone_keyframes = HashMap::<String, Vec<KeyFrame> >::new();
         for bone_anim in bone_animations {
-            let bone_id = bone_anim.as_object().unwrap().get("boneId").unwrap().as_string().unwrap();
+            let bone_id = bone_anim.as_object().unwrap().get("boneId").unwrap().as_string().unwrap().to_string();
             let bone_keyframe_array = bone_anim.as_object().unwrap().get("keyframes").unwrap().as_array().unwrap();
             let mut kfs = Vec::<KeyFrame>::new();
             for bkf in bone_keyframe_array {
@@ -123,14 +146,50 @@ impl Animation {
             kfs.clear();
         }
 
-        for (bone_id, kfs) in bone_keyframes {
-            println!("boneId: {}", bone_id);
-            for kf in kfs {
-                println!("kf: {:?}", kf);
-            }
-        }
+        // get nodes
+        let nodes = data.find("nodes").unwrap();
+        let node_array = nodes.as_array().unwrap();
+        let node = node_array[1].as_object().unwrap();
+        let node_tree = Animation::parseNodes(node);
+
+        // store into Vec<Bone>
+        let bones = Vec::<Bone>::new();
+
+        // for (bone_id, kfs) in bone_keyframes {
+        //     println!("boneId: {}", bone_id);
+        //     for kf in kfs {
+        //         println!("kf: {:?}", kf);
+        //     }
+        // }
+
         Animation {
+            curve: AnimationCurve{curve: bone_keyframes.clone()},
             length: _length
+        }
+    }
+
+    ///
+    /// we only parse the skeleton node here,
+    /// TODO: parse Node nodes
+    ///
+    pub fn parseNodes(jnode: &BTreeMap<String, serde_json::Value>) -> Node {
+        Node {
+            id: jnode.get("id").unwrap().as_string().unwrap().to_string(),
+            skeleton: jnode.get("skeleton").unwrap().as_boolean().unwrap(),
+            transform: (serde_json::from_value(jnode.get("transform").unwrap().clone()) ).unwrap(),
+            children: match jnode.get("children") {
+                Some(children) => {
+                    let mut nodes = Vec::<Node>::new();
+                    for child in children.as_array().unwrap() {
+                        println!("add a child");
+                        nodes.push(Animation::parseNodes(child.as_object().unwrap()));
+                    }
+                    Some(nodes)
+                },
+                None => {
+                    None
+                }
+            }
         }
     }
 
@@ -140,6 +199,10 @@ impl Animation {
     pub fn update(&self,t: f32) {
 
         let moment = t % self.length;
+
+        // 计算调色板矩阵
+        // 
+
 
         // 用插值计算出 moment 时刻的变化，然后对各个关节施加对应的变换
         // for curve in bone_curves {

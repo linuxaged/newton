@@ -11,7 +11,7 @@ pub struct Matrix4x4 {
 }
 
 impl Matrix4x4 {
-    fn new(row00: f32, row01: f32, row02: f32, row03: f32, 
+    pub fn new(row00: f32, row01: f32, row02: f32, row03: f32, 
             row10: f32, row11: f32, row12: f32, row13: f32,
             row20: f32, row21: f32, row22: f32, row23: f32,
             row30: f32, row31: f32, row32: f32, row33: f32) -> Matrix4x4 {
