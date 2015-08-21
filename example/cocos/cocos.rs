@@ -10,6 +10,8 @@ extern crate image;
 use std::io::Cursor;
 use std::path::Path;
 
+use std::thread;
+
 fn main() {
     let c3t = c3t::C3t::new(Path::new("./example/cocos/orc.c3t"));
 
@@ -62,17 +64,28 @@ fn main() {
     let view_up: cgmath::Vector3<f32> = cgmath::Vector3::new(0.0, 1.0, 0.0);
     let view_matrix: cgmath::Matrix4<f32> = cgmath::Matrix4::look_at(&view_eye, &view_center, &view_up);
     let fixed_view_matrix = view_matrix.as_fixed();
-    let model_matrix: cgmath::Matrix4<f32> = cgmath::Matrix4::identity();
-    let fixed_model_matrix = model_matrix.as_fixed();
+    let mut model_matrix: cgmath::Matrix4<f32> = cgmath::Matrix4::identity();
+
+    let rotate_matrix: cgmath::Matrix4<f32> = cgmath::Matrix4::<f32>::new(
+        0.999950,-0.009999, 0.0, 0.0,
+        0.009999, 0.999950, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0,
+    );
 
     loop {
+        thread::sleep_ms(50);
+
         let mut target = display.draw();
         target.clear_color(1.0, 1.0, 1.0, 0.0);
+        
+        model_matrix = model_matrix * rotate_matrix;
+        //let fixed_rotate_model_matrix = model_matrix.clone().as_fixed(); // TODO
 
         let uniforms = uniform! {
             perspective_matrix: *fixed_perspective_matrix,
             view_matrix: *fixed_view_matrix,
-            model_matrix: *fixed_model_matrix,
+            model_matrix: *model_matrix.as_fixed(),
             tex: &texture
         };
 
