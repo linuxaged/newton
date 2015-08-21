@@ -14,5 +14,4 @@ addons:
     - cmake                     # for kcov
 
 script:
-
 	- cargo build --example cocos
