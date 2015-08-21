@@ -49,22 +49,28 @@ pub struct Node {
 
 /// visit the nodes and store
 impl Node {
-    pub fn to_bones(&self, bones: &mut Vec<Bone>) {
-        bones.push(Bone{id: self.id, 
+    pub fn to_bones(self, bones: &mut Vec<Bone>, mut parent: u8, mut into_branch: bool) {
+        bones.push(Bone{id: self.id.clone(), // TODO
                         transform: matrix::Matrix4x4::new(
                             self.transform[0],self.transform[1],self.transform[2],self.transform[3],
                             self.transform[4],self.transform[5],self.transform[6],self.transform[7],
                             self.transform[8],self.transform[9],self.transform[10],self.transform[11],
                             self.transform[12],self.transform[13],self.transform[14],self.transform[15]
                         ), 
-                        parent: 0});
+                        parent: parent});
         match self.children {
             Some(bone_vec) => {
+                println!("{:?}", parent);
                 for bone in bone_vec {
-
+                    if (into_branch) {
+                        parent = parent + 1;
+                        bone.to_bones(bones, parent, into_branch); // 递归；深度优先遍历
+                    }
+                    
+                    into_branch = true;
                 }
             },
-            None => ()
+            None => (into_branch = false)
         }
     }
 }
@@ -150,7 +156,13 @@ impl Animation {
         let nodes = data.find("nodes").unwrap();
         let node_array = nodes.as_array().unwrap();
         let node = node_array[1].as_object().unwrap();
-        let node_tree = Animation::parseNodes(node);
+        let mut node_tree = Animation::parseNodes(node);
+
+        // store nodes into Vec<Bone>
+        let mut bones = Vec::<Bone>::new();
+        let mut into_branch = true;
+        node_tree.to_bones(&mut bones, 0xff, into_branch);
+
 
         // store into Vec<Bone>
         let bones = Vec::<Bone>::new();
